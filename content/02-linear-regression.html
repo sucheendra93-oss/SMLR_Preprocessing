@@ -1,0 +1,553 @@
+  <div class="hero">
+    <span class="eyebrow">Machine Learning · Simple &amp; Multiple Linear Regression</span>
+    <h1>Everything in Session 2, explained simply — and what it earns you in the exam</h1>
+    <p class="lede">Every idea from the Session 2 slides and the <code>carpremium</code> notebook, built up from plain-English intuition and analogies to the exact formulas examiners want — then mapped against your SMLR ESA model paper.</p>
+    <div class="metarow">
+      <span class="chip"><b>1</b> worked dataset</span>
+      <span class="chip"><b>2</b> models: simple + multiple</span>
+      <span class="chip">key metric: <b>R²</b></span>
+      <span class="chip">example: <b>car insurance premium</b></span>
+      <span class="chip">target: <b>Premium</b></span>
+    </div>
+  </div>
+
+  <!-- ============ MAP ============ -->
+  <section class="sec" id="map" data-group="Read first" data-badge="★">
+    <div class="sec-lead"><span class="num">★</span><h2>How this maps to your exam</h2></div>
+    <p>Your model paper (<strong>SMLR ESA</strong>) covers the whole course. Session 2 is the <em>regression</em> engine — it directly answers <strong>Q2 b</strong> in full and supplies the interpretation skills you need for <strong>2c</strong> and <strong>2d</strong>. Here's the honest breakdown so you spend revision time where the marks are.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>QP question</th><th>Topic</th><th>Session 2 covers it?</th></tr></thead>
+        <tbody>
+          <tr><td>1a</td><td>Missing values</td><td><span class="cover c-none">NO</span> — Session 1 (preprocessing)</td></tr>
+          <tr><td>1b</td><td>Feature scaling</td><td><span class="cover c-none">NO</span> — Session 1</td></tr>
+          <tr><td>1c</td><td>Bias–variance, under/overfitting</td><td><span class="cover c-part">PARTLY</span> — overfitting signal via R² gap, see §E3</td></tr>
+          <tr><td>1d</td><td>Hyperparameters vs parameters, tuning</td><td><span class="cover c-none">NO</span> — other session (β are <em>parameters</em>, learned; see §B1 note)</td></tr>
+          <tr><td>1e</td><td>Feature selection (FFS, BE, RFE)</td><td><span class="cover c-none">NO</span> — other session</td></tr>
+          <tr><td>2a</td><td>Real-estate: inspect, missing, encode, split, outliers, EDA</td><td><span class="cover c-none">NO</span> — Session 1 (your preprocessing kit)</td></tr>
+          <tr><td><strong>2b</strong></td><td><strong>MLR build, MAE/RMSE/R², interpret coefficients, generalization</strong></td><td><span class="cover c-full">FULLY</span> — this is pure Session 2 (§E, §C)</td></tr>
+          <tr><td>2c</td><td>Overfitting diagnosis, residuals, LR assumptions, improving generalization</td><td><span class="cover c-part">PARTLY</span> — R²/RMSE reading &amp; overfitting (§C, §E3); assumptions/residuals extend beyond deck (§gaps)</td></tr>
+          <tr><td>2d</td><td>Scaling, RFE, Ridge/Lasso, RMSE model selection, feature engineering</td><td><span class="cover c-part">PARTLY</span> — comparing models by R²/RMSE (§C3); Ridge/Lasso/RFE are other sessions</td></tr>
+          <tr><td>2e</td><td>5-fold cross-validation (Python)</td><td><span class="cover c-none">NO</span> — other session</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Highest-yield insight</b>Question <strong>2b (10 marks)</strong> is answerable end-to-end from Session 2, and the coefficient/R² interpretation it teaches is reused to score the interpretation parts of <strong>2c and 2d</strong>. That's ~14–16 marks resting on the material below. Worked answers are in <a class="inl" href="#practice">Practice</a>.</p></div>
+  </section>
+
+  <!-- ============ BIG PICTURE ============ -->
+  <section class="sec" id="picture" data-group="Read first" data-badge="◎">
+    <div class="sec-lead"><span class="num">◎</span><h2>The big picture (intuition first)</h2></div>
+    <p>Strip away the symbols and linear regression is one sentence: <strong>draw the straight line that best passes through a cloud of dots, then use that line to make predictions.</strong></p>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">The analogy — the "line of best guess"</b>Imagine you plot every car's <em>mileage</em> against its <em>insurance premium</em> as dots on graph paper. The dots don't sit on a perfect line — real life is messy. Linear regression lays a ruler across the scatter and finds the <strong>one tilt and height of the ruler</strong> that sits closest to <em>all</em> the dots at once. Once the ruler is placed, you predict a new car's premium by reading straight up from its mileage to the ruler. The <strong>tilt of the ruler is β₁ (the slope)</strong>, the <strong>height where it crosses the left edge is β₀ (the intercept)</strong>, and the tiny gaps between each dot and the ruler are the <strong>errors (ε)</strong>.</div>
+    <p>Everything else in Session 2 is just making that idea precise and measurable:</p>
+    <ul class="tight">
+      <li><strong>How do we place the ruler?</strong> → Ordinary Least Squares (§B3), which picks the line with the smallest total gap.</li>
+      <li><strong>How good is the fit?</strong> → R² and the sum-of-squares family (§C).</li>
+      <li><strong>Is the tilt real or just luck?</strong> → t-tests and ANOVA (§D).</li>
+      <li><strong>What if several things drive the premium?</strong> → Multiple linear regression (§E) — a ruler in more dimensions.</li>
+    </ul>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Running example used everywhere below</b>Predict a car's <strong>insurance Premium</strong> (target, Y) from its <strong>Mileage</strong> (predictor, X). It's the exact example in the slides and the <code>carpremium.csv</code> notebook, so every formula is grounded in the same numbers.</div>
+  </section>
+
+  <!-- ============ A1 WHERE ============ -->
+  <section class="sec" id="where" data-group="Foundations" data-badge="A1">
+    <div class="sec-lead"><span class="num">A1</span><h2>Where linear regression sits in ML</h2></div>
+    <p>One quick map so you can place regression in a one-mark "what type of task is this" question.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>Supervised</th><th>Unsupervised</th><th>Reinforcement</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Learns from</strong></td><td>Labelled data (X with known answers Y)</td><td>Unlabelled data (patterns only)</td><td>Rewards for good actions</td></tr>
+          <tr><td><strong>Splits into</strong></td><td><strong>Regression</strong> (predict a number) &amp; Classification (predict a category)</td><td>Clustering, PCA</td><td>—</td></tr>
+          <tr><td><strong>Example</strong></td><td>Premium from mileage (number → regression)</td><td>Group similar customers</td><td>Game-playing agent</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">One-liner</b>Predicting a <strong>continuous number</strong> (premium, price, salary) from labelled data = <strong>supervised regression</strong>. Linear regression is the simplest such model. Predicting a <strong>category</strong> (healthy/infected) would be classification instead.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Parameters vs hyperparameters (for QP 1d)</b>β₀ and β₁ are <strong>parameters</strong> — the model <em>learns</em> them from data via OLS. A <strong>hyperparameter</strong> is set by you <em>before</em> training (e.g. Ridge/Lasso's penalty α). Plain linear regression has a closed-form solution and essentially <em>no</em> hyperparameters to tune — a point worth making in 1d.</div>
+  </section>
+
+  <!-- ============ A2 COV/CORR ============ -->
+  <section class="sec" id="covcorr" data-group="Foundations" data-badge="A2">
+    <div class="sec-lead"><span class="num">A2</span><h2>Covariance &amp; correlation</h2></div>
+    <p>Before fitting a line, you check whether X and Y even <em>move together</em>. That's what covariance and correlation measure — and correlation feeds directly into the slope formula (§B4) and R² (§C2).</p>
+
+    <h3>Covariance <span class="tag">do they move together?</span></h3>
+    <div class="eq">COV(<var>X</var>,<var>Y</var>) = <span class="frac"><span class="num">Σ (<var>X<sub>i</sub></var> − <var>X̄</var>)(<var>Y<sub>i</sub></var> − <var>Ȳ</var>)</span><span class="den"><var>n</var> − 1</span></span></div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — two dancers</b>Covariance asks: when X steps above its average, does Y also step above <em>its</em> average? If they rise and fall together, covariance is <strong>positive</strong>. If one rises while the other falls, it's <strong>negative</strong>. If they ignore each other, it's near <strong>zero</strong>. The catch: covariance's size depends on the units (rupees × km looks huge), so you can't tell "strong" from "weak" by the number alone.</div>
+
+    <h3>Pearson's correlation (R) <span class="tag">the fix — a −1…+1 score</span></h3>
+    <div class="eq">R = <span class="frac"><span class="num">Cov(<var>x</var>,<var>y</var>)</span><span class="den">σ<sub><var>x</var></sub> · σ<sub><var>y</var></sub></span></span></div>
+    <p>Correlation is covariance <strong>scaled by the two standard deviations</strong>, which strips out the units and squeezes the answer into a fixed range:</p>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Reading the correlation value</b><code>R = +1</code> perfect upward line · <code>+0.9</code> strong up · <code>+0.3</code> weak up · <code>0</code> no linear link · <code>−0.3</code> weak down · <code>−1</code> perfect downward line. It only measures <strong>linear</strong> association — a perfect U-shape can have R ≈ 0.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">In our example</b>The notebook's <code>df.corr()</code> gives <strong>−0.475</strong> between Mileage and Premium: a <em>moderate negative</em> link — higher mileage tends to go with lower premium. That negative sign is why the fitted slope β₁ comes out negative (§B4).</div>
+  </section>
+
+  <!-- ============ B1 LINE ============ -->
+  <section class="sec" id="line" data-group="Simple Linear Regression" data-badge="B1">
+    <div class="sec-lead"><span class="num">B1</span><h2>The line: y = β₀ + β₁x + ε</h2></div>
+    <p>A <strong>simple</strong> linear regression (also called <em>bivariate regression</em>) has <strong>one</strong> predictor X with a linear relationship to the target Y.</p>
+    <div class="eq big"><var>y</var> = β<sub>0</sub> + β<sub>1</sub><var>x</var> + ε</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Symbol</th><th>Name</th><th>Plain meaning</th></tr></thead>
+        <tbody>
+          <tr><td><var>y</var></td><td>Dependent / response / <strong>target</strong> variable</td><td>What you predict — here, Premium</td></tr>
+          <tr><td><var>x</var></td><td>Independent / <strong>predictor</strong> variable</td><td>What you predict from — here, Mileage</td></tr>
+          <tr><td>β<sub>0</sub></td><td>Intercept</td><td>Where the line crosses the Y-axis (value of Y when X = 0)</td></tr>
+          <tr><td>β<sub>1</sub></td><td>Slope / coefficient</td><td>How much Y changes per 1-unit rise in X (the tilt)</td></tr>
+          <tr><td>ε</td><td>Error / residual</td><td>The gap between the real dot and the line</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>In our example the model reads:</p>
+    <div class="eq"><strong>Premium = β<sub>0</sub> + β<sub>1</sub> · Mileage + ε</strong></div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — dependent vs independent</b>Mix these up and the whole answer collapses. <strong>Dependent = target = response = Y</strong> (the effect you explain). <strong>Independent = predictor = X</strong> (the cause you explain with). "Depends on" → the thing that depends is Y.</div>
+  </section>
+
+  <!-- ============ B2 ERROR ============ -->
+  <section class="sec" id="error" data-group="Simple Linear Regression" data-badge="B2">
+    <div class="sec-lead"><span class="num">B2</span><h2>The error term (residual)</h2></div>
+    <p>No straight line hits every dot. The <strong>error term ε</strong> (also called the <strong>residual</strong>) is the vertical distance from an observed dot to the line.</p>
+    <div class="eq">ε = <var>y</var> − (β<sub>0</sub> + β<sub>1</sub><var>x</var>) &nbsp;⟹&nbsp; ε = <var>y</var><sub>actual</sub> − <var>y</var><sub>predicted</sub></div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — how wrong was each guess?</b>The line is your prediction machine. For every car, it <em>guesses</em> a premium. The residual is simply <strong>how far off that guess was</strong> for that one car — real premium minus guessed premium. A dot above the line = we under-predicted (positive residual); below = we over-predicted (negative).</div>
+    <p>We get one residual per observation. To judge the <em>whole</em> line we square each residual (so positives and negatives don't cancel, and big misses are punished more) and add them up:</p>
+    <div class="eq">ε<sub><var>i</var></sub><sup>2</sup> = (<var>y</var><sub>actual</sub> − <var>y</var><sub>predicted</sub>)<sup>2</sup> &nbsp;&nbsp;⟹&nbsp;&nbsp; Sum of squared errors = Σ ε<sub><var>i</var></sub><sup>2</sup></div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Why square, not just add?</b>Raw residuals sum to ~0 (the line balances above and below). Squaring makes every miss positive and penalises a few <em>large</em> errors far more than many small ones — which is exactly the behaviour we want from a "best" line.</div>
+  </section>
+
+  <!-- ============ B3 OLS ============ -->
+  <section class="sec" id="ols" data-group="Simple Linear Regression" data-badge="B3">
+    <div class="sec-lead"><span class="num">B3</span><h2>OLS — finding the best-fit line</h2></div>
+    <p>Many lines could be drawn through the scatter. The <strong>best-fit line</strong> is the one that best explains the trend. <strong>Ordinary Least Squares (OLS)</strong> defines "best" as <strong>smallest sum of squared errors</strong>.</p>
+    <div class="eq">min &nbsp;Σ<sub><var>i</var>=1</sub><sup><var>n</var></sup> (<var>y<sub>i</sub></var> − (β<sub>0</sub> + β<sub>1</sub><var>x<sub>i</sub></var>))<sup>2</sup></div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — tightening rubber bands</b>Picture a vertical rubber band from each dot to the ruler. Each band stores energy proportional to its length <em>squared</em>. OLS slides and tilts the ruler until the <strong>total stored energy is as small as possible</strong> — the position where the bands are collectively least stretched. That resting position is the best-fit line.</div>
+
+    <h3>The maths behind OLS <span class="tag">why two equations, two unknowns</span></h3>
+    <p>To minimise the total squared error <var>E</var> = Σε², you use calculus: take the partial derivative with respect to each unknown and set it to zero (a function is flat at its minimum).</p>
+    <div class="eq">∂<var>E</var>/∂β<sub>0</sub> = 0 &nbsp;&nbsp;&nbsp;&nbsp; ∂<var>E</var>/∂β<sub>1</sub> = 0</div>
+    <p>That's <strong>two equations with two unknowns</strong> (β₀, β₁). Solving them gives clean closed-form formulas — no trial and error needed.</p>
+    <div class="box info"><span class="ic">i</span><b class="lbl">The one-line takeaway for the exam</b>OLS finds β₀ and β₁ by <strong>minimising the sum of squared residuals</strong>; setting the two partial derivatives to zero yields two normal equations solved for the two parameters. You rarely compute this by hand — <code>statsmodels</code> or <code>sklearn</code> does it — but you must be able to <em>state</em> it.</div>
+  </section>
+
+  <!-- ============ B4 BETAS ============ -->
+  <section class="sec" id="betas" data-group="Simple Linear Regression" data-badge="B4">
+    <div class="sec-lead"><span class="num">B4</span><h2>Computing β₀ and β₁</h2></div>
+    <p>Solving the two OLS equations gives these two formulas — the ones to memorise:</p>
+    <div class="eq big">β<sub>1</sub> = <span class="frac"><span class="num">Cov(<var>X</var>,<var>Y</var>)</span><span class="den">Var(<var>X</var>)</span></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; β<sub>0</sub> = <var>Ȳ</var> − β<sub>1</sub><var>X̄</var></div>
+    <ul class="tight">
+      <li><strong>Slope first:</strong> β₁ is how X and Y co-move (covariance) divided by how much X varies on its own. Its <em>sign</em> matches the correlation's sign.</li>
+      <li><strong>Then intercept:</strong> β₀ forces the line to pass through the average point (<var>X̄</var>, <var>Ȳ</var>). Once you know the tilt, this pins the height.</li>
+    </ul>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Worked from the notebook data</b>For <code>carpremium.csv</code> the formulas give <strong>β₁ = −11.6905</strong> and <strong>β₀ = 327.0860</strong>, so the fitted model is:
+    <div class="eq" style="font-size:17px;margin:12px 0 4px">Premium = 327.0860 − 11.6905 · Mileage</div></div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Manual computation (in the notebook)</b>The notebook computes it the "by hand" way to show it's not magic: <code>b1 = Σ(x−x̄)(y−ȳ) / Σ(x−x̄)²</code> then <code>b0 = ȳ − b1·x̄</code>. Same numbers <code>statsmodels</code> returns.</div>
+  </section>
+
+  <!-- ============ B5 INTERPRET ============ -->
+  <section class="sec" id="interpret" data-group="Simple Linear Regression" data-badge="B5">
+    <div class="sec-lead"><span class="num">B5</span><h2>Interpreting the coefficients</h2></div>
+    <p>Interpretation is where easy marks live (QP 2b-c). State it in <em>business</em> language, with units.</p>
+    <ul class="tight">
+      <li><strong>β₁ (slope):</strong> the change in Y for a <strong>one-unit increase in X</strong>. Positive → Y rises; negative → Y falls.</li>
+      <li><strong>β₀ (intercept):</strong> the predicted Y when <strong>X = 0</strong>. Sometimes meaningful, sometimes just where the maths anchors the line.</li>
+    </ul>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">In our example</b><strong>β₀ = 327.086</strong>: the premium of a car at Mileage = 0 (i.e. straight after manufacture) ≈ $327.09. <strong>β₁ = −11.6905</strong>: each extra unit of mileage lowers the predicted premium by about $11.69 on average.</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — say "on average" and "per unit"</b>A full-mark interpretation names the <strong>direction</strong> (increase/decrease), the <strong>size with units</strong> ($11.69), and that it's <strong>per one-unit change, on average, holding other variables constant</strong> (the last clause matters in MLR). "Mileage is negative" alone is half an answer.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Significance rides along</b>Each β has a <strong>p-value</strong> that tells you whether it's genuinely non-zero (§D1). A coefficient can look big but be statistically insignificant — mention this to show depth.</div>
+  </section>
+
+  <!-- ============ B6 PREDICT ============ -->
+  <section class="sec" id="predict" data-group="Simple Linear Regression" data-badge="B6">
+    <div class="sec-lead"><span class="num">B6</span><h2>Making predictions</h2></div>
+    <p>Once β₀ and β₁ are fixed, prediction is just <strong>substitution</strong> — plug the X value into the equation.</p>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Worked example</b>For a car with Mileage = 17:
+    <div class="eq" style="font-size:16px;margin:12px 0 2px"><var>y</var><sub>predicted</sub> = 327.0860 − 11.6905 × 17 = $128.3475</div></div>
+    <p>Do this for every row and you can compare predicted vs actual — the residuals — which feed every quality metric in §C.</p>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Which line is "best"? — a concrete check</b>The slides draw three candidate lines and compute Σε² for each: <strong>3.94×10⁵</strong>, <strong>1.6×10⁵</strong>, <strong>26.8×10⁵</strong>. The middle line has the <em>least</em> squared error, so OLS would pick it — that's the best-fit line in action.</div>
+  </section>
+
+  <!-- ============ C1 VARIATION ============ -->
+  <section class="sec" id="variation" data-group="How good is the line?" data-badge="C1">
+    <div class="sec-lead"><span class="num">C1</span><h2>Measures of variation — SST, SSR, SSE</h2></div>
+    <p>To score the line, we split the total spread of Y into "what the line explained" and "what it missed". Three sums of squares:</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Formula</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><strong>SST</strong> (Total)<br><small>a.k.a. TSS</small></td><td>Σ(<var>y<sub>i</sub></var> − <var>ȳ</var>)²</td><td><strong>Total</strong> variation of Y about its mean — the spread you start with, before any model.</td></tr>
+          <tr><td><strong>SSR</strong> (Regression)<br><small>a.k.a. RSS</small></td><td>Σ(<var>ŷ<sub>i</sub></var> − <var>ȳ</var>)²</td><td><strong>Explained</strong> variation — how much of the spread the line accounts for.</td></tr>
+          <tr><td><strong>SSE</strong> (Error)<br><small>a.k.a. ESS</small></td><td>Σ(<var>y<sub>i</sub></var> − <var>ŷ<sub>i</sub></var>)²</td><td><strong>Unexplained</strong> variation — the leftover, the squared residuals.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — a budget of "surprise"</b>SST is your <strong>total budget of surprise</strong>: how unpredictable premiums are if all you know is the average. The line spends some of that budget explaining the pattern (<strong>SSR</strong>) and leaves the rest unexplained (<strong>SSE</strong>). A great model spends most of the budget — big SSR, small SSE.</div>
+    <div class="eq big">SST = SSR + SSE</div>
+    <div class="eq">Σ(<var>y<sub>i</sub></var> − <var>ȳ</var>)² = Σ(<var>ŷ<sub>i</sub></var> − <var>ȳ</var>)² + Σ(<var>y<sub>i</sub></var> − <var>ŷ<sub>i</sub></var>)²</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — don't confuse the two R's</b>Naming is nasty: <strong>SSR = Regression = explained</strong>, but some books write <strong>RSS = Residual = SSE = unexplained</strong>. Your slides use SSR for regression (explained) and SSE/ESS for error (unexplained). Always define your symbols in the answer so you can't be marked wrong on notation.</div>
+  </section>
+
+  <!-- ============ C2 R2 ============ -->
+  <section class="sec" id="rsq" data-group="How good is the line?" data-badge="C2">
+    <div class="sec-lead"><span class="num">C2</span><h2>R² — the coefficient of determination</h2></div>
+    <p>R² is the single most-quoted quality number: <strong>the fraction of the variation in Y that the model explains.</strong></p>
+    <div class="eq big">R² = <span class="frac"><span class="num">Explained variation</span><span class="den">Total variation</span></span> = <span class="frac"><span class="num">SSR</span><span class="den">SST</span></span> = 1 − <span class="frac"><span class="num">SSE</span><span class="den">SST</span></span> &nbsp;&nbsp;&nbsp; (0 ≤ R² ≤ 1)</div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — the exam-score of the model</b>R² is like a percentage score out of 100. <strong>R² = 1</strong> → the line explains everything (all dots on the line). <strong>R² = 0</strong> → the line is useless, no better than always guessing the average. <strong>R² = 0.226</strong> → the line explains 22.6% of what's going on; the other 77.4% is down to things mileage alone can't capture.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">In our example</b>The model's <strong>R² = 0.226</strong> → mileage explains <strong>22.6%</strong> of the variation in premiums. For simple regression there's a neat shortcut: <strong>R² = (correlation)²</strong> → (−0.475)² ≈ 0.226. Same number.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Reading R² in the exam (QP 2b-d, 2c-a)</b>Higher is better, but "good" is context-dependent. A big gap between <strong>training R² and testing R²</strong> (e.g. 0.96 vs 0.54) signals <strong>overfitting</strong> — see §E3. Close train/test values (0.86 vs 0.81) signal good generalization.</div>
+  </section>
+
+  <!-- ============ C3 METRICS ============ -->
+  <section class="sec" id="metrics" data-group="How good is the line?" data-badge="C3">
+    <div class="sec-lead"><span class="num">C3</span><h2>MAE, RMSE &amp; the standard error</h2></div>
+    <p>R² tells you the <em>proportion</em> explained; error metrics tell you <strong>how far off in real units</strong> the predictions are. QP 2b asks for all of MAE, RMSE and R².</p>
+
+    <h3>Standard error of estimate <span class="tag">from the deck</span></h3>
+    <div class="eq"><var>S<sub>xy</sub></var> = <span class="rad">√</span><span class="sqrt"><span class="frac"><span class="num">Σ(<var>y<sub>i</sub></var> − <var>ŷ<sub>i</sub></var>)²</span><span class="den"><var>n</var> − <var>k</var></span></span></span></div>
+    <p>A measure of the <strong>unexplained</strong> spread — the typical size of a residual. <var>n</var> = sample size, <var>k</var> = number of estimated parameters (β₀, β₁ → k = 2). <strong>Smaller = better model.</strong></p>
+
+    <h3>MAE and RMSE <span class="tag">needed for QP 2b</span></h3>
+    <div class="eq">MAE = <span class="frac"><span class="num">Σ |<var>y<sub>i</sub></var> − <var>ŷ<sub>i</sub></var>|</span><span class="den"><var>n</var></span></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RMSE = <span class="rad">√</span><span class="sqrt"><span class="frac"><span class="num">Σ(<var>y<sub>i</sub></var> − <var>ŷ<sub>i</sub></var>)²</span><span class="den"><var>n</var></span></span></span></div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — MAE vs RMSE</b><strong>MAE</strong> = your <em>average</em> miss, treating a $5 miss and a $50 miss proportionally. <strong>RMSE</strong> squares first, so it's like a referee who <em>hates big blunders</em> — one wildly wrong prediction hurts RMSE far more than MAE. Both are in the target's units (dollars), so they're directly readable; lower is better for both.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Units</th><th>Sensitive to big errors?</th><th>Use when</th></tr></thead>
+        <tbody>
+          <tr><td>MAE</td><td>same as Y</td><td>No — treats all errors linearly</td><td>You want a robust, easy-to-explain average error</td></tr>
+          <tr><td>RMSE</td><td>same as Y</td><td>Yes — penalises large misses</td><td>Big errors are especially costly</td></tr>
+          <tr><td>R²</td><td>unitless (0–1)</td><td>—</td><td>You want "% variation explained", scale-free comparison</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">sklearn one-liners (memorise for 2b)</b><code>mean_absolute_error(y_test, y_pred)</code>, <code>mean_squared_error(y_test, y_pred)</code> then <code>np.sqrt(...)</code> for RMSE (or <code>squared=False</code>), and <code>r2_score(y_test, y_pred)</code>.</div>
+  </section>
+
+  <!-- ============ C4 ADJ R2 ============ -->
+  <section class="sec" id="adjr2" data-group="How good is the line?" data-badge="C4">
+    <div class="sec-lead"><span class="num">C4</span><h2>Adjusted R² — R²'s honest sibling</h2></div>
+    <p>Plain R² has a flaw: <strong>it never goes down when you add a predictor</strong>, even a useless one. So a bloated model can look "better" purely because it has more variables.</p>
+    <div class="eq big">R²<sub>adj</sub> = 1 − <span class="frac"><span class="num">(1 − R²)(<var>n</var> − 1)</span><span class="den"><var>n</var> − <var>k</var> − 1</span></span></div>
+    <p>where R² is the model's R², <var>n</var> = sample size, <var>k</var> = number of predictors.</p>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — R² pays no rent, adjusted R² does</b>R² lets any new variable move in for free, so the house always looks fuller. Adjusted R² <strong>charges rent</strong> (the <code>n−k−1</code> term): a new variable only raises the score if it earns its keep by explaining <em>enough</em> extra variation. Add junk features and adjusted R² actually <strong>drops</strong>.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Key facts (worth stating in 2b-d)</b><strong>R²<sub>adj</sub> ≤ R²</strong> always. Compare the two: if adding a feature raises R² but <em>lowers</em> R²<sub>adj</sub>, that feature isn't pulling its weight. This is exactly why the QP reports Adjusted R² = 0.79 alongside R² = 0.86/0.81.</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Demerit of R²</b>R² rises with every added predictor and <strong>overfitted models tend to have high R²</strong> — so a high training R² alone is not proof of a good model. Always check test performance and adjusted R².</div>
+  </section>
+
+  <!-- ============ D1 TTEST ============ -->
+  <section class="sec" id="ttest" data-group="Is the relationship real?" data-badge="D1">
+    <div class="sec-lead"><span class="num">D1</span><h2>The t-test for the slope</h2></div>
+    <p>A fitted slope is never exactly zero — but is it <em>really</em> different from zero, or just noise? The <strong>t-test</strong> answers that.</p>
+    <div class="box info"><span class="ic">i</span><b class="lbl">The hypotheses (slope)</b><strong>H₀: β₁ = 0</strong> → no relationship between X and Y. &nbsp; <strong>H₁: β₁ ≠ 0</strong> → there is a relationship. Failing to reject H₀ means the predictor isn't significant.</div>
+    <div class="eq big"><var>t</var> = <span class="frac"><span class="num"><span class="betahat">β</span><sub>1</sub></span><span class="den">SE(<span class="betahat">β</span><sub>1</sub>)</span></span> &nbsp;&nbsp; follows <var>t</var><sub>(n−2)</sub></div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — signal vs wobble</b>The t-statistic is <strong>signal ÷ wobble</strong>: the estimated slope (signal) divided by how much it would jiggle if you re-sampled the data (its standard error). A big t means the slope is large <em>relative to its uncertainty</em> — hard to write off as luck.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Decision rule — the p-value shortcut</b>Reject H₀ if <code>|t| &gt; t<sub>(n−2), α/2</sub></code>, or simply if the <strong>p-value &lt; α</strong> (usually 0.05). <strong>p &lt; 0.05 → significant</strong> (keep the variable); p &gt; 0.05 → not significant.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Same machinery, three targets</b>The identical t-test form tests the <strong>intercept</strong> (H₀: β₀ = 0) and the <strong>correlation</strong> (H₀: ρ = 0, with <var>t</var> = ρ√(n−2)/√(1−ρ²)). In our example the mileage slope has p ≈ 0.063 — just above 0.05, so borderline/not significant at 5%, matching the weak R².</div>
+  </section>
+
+  <!-- ============ D2 CI ============ -->
+  <section class="sec" id="ci" data-group="Is the relationship real?" data-badge="D2">
+    <div class="sec-lead"><span class="num">D2</span><h2>Confidence intervals for the coefficients</h2></div>
+    <p>Instead of a single number, a <strong>confidence interval</strong> gives a plausible range for the true coefficient.</p>
+    <div class="eq">( <span class="betahat">β</span><sub>1</sub> − <var>t</var><sub>(n−2),α/2</sub>·SE(<span class="betahat">β</span><sub>1</sub>) , &nbsp; <span class="betahat">β</span><sub>1</sub> + <var>t</var><sub>(n−2),α/2</sub>·SE(<span class="betahat">β</span><sub>1</sub>) )</div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — the "95 out of 100" net</b>A 95% CI (α = 0.05) means: if you repeated the whole experiment 100 times, the net you cast would catch the <em>true</em> coefficient about 95 times. Wider net = more uncertainty.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">The test-and-CI link (a favourite trap)</b>With α = 0.05 you use the 0.025 and 0.975 quantiles. In our example β₁'s 95% CI is <strong>(−24.665, 1.284)</strong>. Because that interval <strong>contains 0</strong>, you cannot rule out β₁ = 0 — i.e. the slope is <em>not</em> significant at 5%, perfectly consistent with p ≈ 0.063. β₀'s CI is (139.057, 515.115), which excludes 0 → intercept is significant.</div>
+  </section>
+
+  <!-- ============ D3 ANOVA ============ -->
+  <section class="sec" id="anova" data-group="Is the relationship real?" data-badge="D3">
+    <div class="sec-lead"><span class="num">D3</span><h2>ANOVA / F-test for the model</h2></div>
+    <p>The t-test checks one coefficient; the <strong>F-test (ANOVA)</strong> checks whether the <strong>whole model</strong> is significant.</p>
+    <div class="box info"><span class="ic">i</span><b class="lbl">The hypotheses</b><strong>H₀: β₁ = 0</strong> (all slopes zero → model not significant) vs <strong>H₁: at least one β ≠ 0</strong> (model significant). In simple regression this coincides with the slope t-test.</div>
+    <div class="codecap">ANOVA table for regression with k predictors</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Source</th><th>Sum of Squares</th><th>df</th><th>Mean Square</th><th>F ratio</th></tr></thead>
+        <tbody>
+          <tr><td>Regression</td><td>SSR</td><td><var>k</var></td><td>MSR = SSR/<var>k</var></td><td rowspan="3" style="vertical-align:middle"><strong>F₀ = MSR / MSE</strong></td></tr>
+          <tr><td>Residual</td><td>SSE</td><td><var>n</var> − <var>k</var> − 1</td><td>MSE = SSE/(<var>n</var>−<var>k</var>−1)</td></tr>
+          <tr><td>Total</td><td>SST</td><td><var>n</var> − 1</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — a signal-to-noise ratio for the model</b>F is (variation the model explained, per parameter) ÷ (variation it left as noise, per leftover df). A <strong>big F</strong> means the model explains far more than it leaves behind — the pattern is real.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Decision rule</b>Reject H₀ if <code>F₀ &gt; F<sub>(k, n−k−1), α</sub></code> or if the model's <strong>p-value (Prob(F-statistic)) &lt; α</strong>. In our example Prob(F) ≈ 0.063 → the model is only borderline significant, again matching the low R².</div>
+  </section>
+
+  <!-- ============ D4 SUMMARY ============ -->
+  <section class="sec" id="summary" data-group="Is the relationship real?" data-badge="D4">
+    <div class="sec-lead"><span class="num">D4</span><h2>Reading the statsmodels OLS summary</h2></div>
+    <p>All of §D shows up in one table. The notebook builds it with <code>statsmodels</code>; here's how to read the numbers that matter.</p>
+    <pre><code class="language-python"><span class="tk-kw">import</span> statsmodels.api <span class="tk-kw">as</span> sm
+xc = sm.add_constant(x)          <span class="tk-com"># adds the β₀ (intercept) column of 1s</span>
+model = sm.OLS(y, xc).fit()      <span class="tk-com"># fit by ordinary least squares</span>
+model.summary()</code></pre>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>In the summary</th><th>Value (our model)</th><th>What it tells you</th></tr></thead>
+        <tbody>
+          <tr><td>R-squared</td><td>0.226</td><td>Mileage explains 22.6% of premium variation</td></tr>
+          <tr><td>coef (const)</td><td>327.086</td><td>β₀ — intercept</td></tr>
+          <tr><td>coef (Mileage)</td><td>−11.6905</td><td>β₁ — slope</td></tr>
+          <tr><td>P&gt;|t| (Mileage)</td><td>0.063</td><td>p-value of slope — &gt; 0.05, so <em>not</em> significant at 5%</td></tr>
+          <tr><td>[0.025, 0.975]</td><td>(−24.10, 0.72)</td><td>95% CI for the slope — contains 0 → consistent with "not significant"</td></tr>
+          <tr><td>Prob (F-statistic)</td><td>0.0629</td><td>whole-model p-value (ANOVA)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">The reading routine</b>1) R² — how much explained. 2) coef — the equation and its interpretation. 3) P&gt;|t| — which predictors are significant (&lt; 0.05). 4) CI — does it straddle 0? 5) Prob(F) — is the model as a whole any good? This routine answers most "interpret the output" questions.</div>
+  </section>
+
+  <!-- ============ E1 MLR ============ -->
+  <section class="sec" id="mlr" data-group="Multiple Linear Regression" data-badge="E1">
+    <div class="sec-lead"><span class="num">E1</span><h2>Multiple linear regression</h2></div>
+    <p>Reality has many drivers. <strong>Multiple linear regression (MLR)</strong> uses several predictors X₁, X₂, …, Xₙ to predict Y.</p>
+    <div class="eq big"><var>y</var> = β<sub>0</sub> + β<sub>1</sub><var>x</var><sub>1</sub> + β<sub>2</sub><var>x</var><sub>2</sub> + β<sub>3</sub><var>x</var><sub>3</sub> + … + β<sub>n</sub><var>x</var><sub>n</sub> + ε</div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — from a ruler to a tilted sheet</b>Simple regression fits a <em>line</em> in 2D. Add a second predictor and you're fitting a flat <em>sheet</em> in 3D; add more and it's a "flat" surface in higher dimensions you can't picture. Each βᵢ is the tilt of that surface <strong>along one axis</strong> — the effect of that one variable while the others are held still.</div>
+    <p>In our extended example (slides add Engine_Capacity and Age):</p>
+    <div class="eq" style="font-size:16px"><strong>Premium = β<sub>0</sub> + β<sub>1</sub>·Mileage + β<sub>2</sub>·Engine_Capacity + β<sub>3</sub>·Age + ε</strong></div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Fitted MLR model (from the deck)</b>β₀ = 138.398, β₁ = −4.876, β₂ = 137.633, β₃ = −23.718, giving:
+    <div class="eq" style="font-size:15px;margin:10px 0 2px">Premium = 138.398 − 4.876·Mileage + 137.633·Engine_Capacity − 23.718·Age</div></div>
+  </section>
+
+  <!-- ============ E2 MATRIX ============ -->
+  <section class="sec" id="matrix" data-group="Multiple Linear Regression" data-badge="E2">
+    <div class="sec-lead"><span class="num">E2</span><h2>Matrix form &amp; the OLS estimate</h2></div>
+    <p>With many predictors, solving the equations one by one gets ugly, so we stack everything into matrices. The whole system becomes:</p>
+    <div class="eq big"><var>Y</var> = <var>X</var>β + ε</div>
+    <ul class="tight">
+      <li><strong>Y</strong> — the <var>n</var>×1 column of target values.</li>
+      <li><strong>X</strong> — the design matrix: a leading column of 1s (for β₀) plus one column per predictor.</li>
+      <li><strong>β</strong> — the column of coefficients to solve for.</li>
+    </ul>
+    <p>Solving the least-squares problem in matrix form gives the famous closed form:</p>
+    <div class="eq big"><span class="betahat">β</span> = [<var>X</var>′<var>X</var>]<sup>−1</sup> <var>X</var>′<var>Y</var></div>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — one formula that solves all the βs at once</b>Instead of tightening rubber bands one dimension at a time, this formula <strong>solves the entire multi-dimensional balance in a single algebraic step</strong>. <var>X</var>′ is the transpose of <var>X</var>; the inverse <code>[X′X]⁻¹</code> does the "dividing" that isolates β. You won't invert matrices by hand in the exam — you must recognise and state the formula.</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — write X′ (transpose)</b>The formula is <code>β = (XᵀX)⁻¹ XᵀY</code>. Dropping a transpose or the inverse is the classic slip. The dimension check: X is n×(k+1), so XᵀX is (k+1)×(k+1) — square, hence invertible.</div>
+  </section>
+
+  <!-- ============ E3 MLR INTERPRET ============ -->
+  <section class="sec" id="mlr-interpret" data-group="Multiple Linear Regression" data-badge="E3">
+    <div class="sec-lead"><span class="num">E3</span><h2>Interpreting MLR &amp; spotting overfitting</h2></div>
+    <h3>Interpreting each coefficient <span class="tag">"holding others constant"</span></h3>
+    <p>In MLR each βᵢ is the effect of that variable <strong>while every other predictor is held fixed</strong> (the "ceteris paribus" clause). This phrase is worth marks.</p>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">From the deck's model</b><strong>β₁ = −4.876</strong>: each unit of mileage lowers premium by ~$4.88, <em>holding engine capacity and age constant</em>. <strong>β₂ = 137.633</strong>: each unit of engine capacity raises premium by ~$137.63, others held fixed. <strong>β₀ = 138.398</strong>: premium when all predictors are 0 — mathematically the anchor, physically absurd here.</div>
+
+    <h3>Overfitting via the R² gap <span class="tag">QP 2c-a, 2b-d</span></h3>
+    <div class="box ana"><span class="ic">☺</span><b class="lbl">Analogy — memorising vs understanding</b>A student who <strong>memorises</strong> the textbook aces the exact homework (high training R²) but flunks a new exam (low test R²). That gap is <strong>overfitting</strong>: the model learned noise, not the pattern. A student who <strong>understands</strong> scores similarly on both (train ≈ test) — good generalization.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Reading the QP's numbers</b><strong>Train R² 0.96 vs Test R² 0.54</strong> (Q2c) → big gap → <strong>overfitting</strong>. <strong>Train 0.86, Test 0.81, Adj 0.79</strong> (Q2b) → small gap → <strong>generalizes well</strong>. Fixes for overfitting: more data, fewer/selected features, regularisation (Ridge/Lasso), cross-validation — some of these are later sessions (§gaps).</div>
+  </section>
+
+  <!-- ============ NOTEBOOK ============ -->
+  <section class="sec" id="notebook" data-group="The notebook" data-badge="▶">
+    <div class="sec-lead"><span class="num">▶</span><h2>The notebook — <code>carpremium.csv</code> walkthrough</h2></div>
+    <p>The faculty Session 2 notebook builds the simple model end to end. Here's every step with the mechanics, so you can reproduce it from memory.</p>
+
+    <div class="codecap">1 · Imports</div>
+    <pre><code class="language-python"><span class="tk-kw">import</span> pandas <span class="tk-kw">as</span> pd
+<span class="tk-kw">import</span> numpy <span class="tk-kw">as</span> np
+<span class="tk-kw">import</span> matplotlib.pyplot <span class="tk-kw">as</span> plt
+<span class="tk-kw">import</span> seaborn <span class="tk-kw">as</span> sns
+<span class="tk-kw">from</span> scipy <span class="tk-kw">import</span> stats
+<span class="tk-kw">import</span> statsmodels.api <span class="tk-kw">as</span> sm      <span class="tk-com"># the star of this session — gives the full stats summary</span>
+pd.options.display.max_columns = <span class="tk-kw">None</span></code></pre>
+    <p><strong>Mechanically:</strong> <code>statsmodels</code> is what makes this a <em>statistics</em> session (not just sklearn prediction) — it returns coefficients, p-values, CIs and the ANOVA all at once.</p>
+
+    <div class="codecap">2 · Load &amp; inspect</div>
+    <pre><code class="language-python">df = pd.read_csv(<span class="tk-str">'carpremium.csv'</span>)
+df.head()
+df.info()                          <span class="tk-com"># 16 rows, 2 cols (Mileage, Premium), no nulls</span>
+df.shape                           <span class="tk-com"># (16, 2)</span></code></pre>
+
+    <div class="codecap">3 · EDA — scatter &amp; correlation</div>
+    <pre><code class="language-python">sns.scatterplot(x=df[<span class="tk-str">'Mileage'</span>], y=df[<span class="tk-str">'Premium'</span>])   <span class="tk-com"># see the downward trend</span>
+df.corr()                          <span class="tk-com"># Mileage↔Premium = -0.475 (moderate negative)</span></code></pre>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Tiny dataset, on purpose</b>Only 16 rows — the notebook <em>skips the train/test split</em> deliberately, to keep the focus on the mechanics of fitting a line. In an exam applied question you <strong>would</strong> split (see §gaps and Practice).</div>
+
+    <div class="codecap">4 · Quick checks — outliers &amp; missing</div>
+    <pre><code class="language-python">df.boxplot()                       <span class="tk-com"># no points beyond the whiskers → no outliers</span>
+sns.boxplot(df[<span class="tk-str">'Mileage'</span>])
+df.isnull().sum()                  <span class="tk-com"># 0 missing in both columns</span></code></pre>
+
+    <div class="codecap">5 · OLS by hand — prove the formulas</div>
+    <pre><code class="language-python">x = df[<span class="tk-str">'Mileage'</span>];  y = df[<span class="tk-str">'Premium'</span>]
+x_bar, y_bar = np.mean(x), np.mean(y)
+
+num   = np.sum((x - x_bar) * (y - y_bar))   <span class="tk-com"># ≈ Cov·(n-1)</span>
+denom = np.sum((x - x_bar)**<span class="tk-num">2</span>)             <span class="tk-com"># ≈ Var(X)·(n-1)</span>
+
+b1 = num / denom                   <span class="tk-com"># -11.6905  (slope)</span>
+b0 = y_bar - b1 * x_bar            <span class="tk-com"># 327.0860  (intercept)</span></code></pre>
+    <p><strong>Mechanically:</strong> this is <code>β₁ = Cov(X,Y)/Var(X)</code> and <code>β₀ = ȳ − β₁x̄</code> spelled out — the <code>(n−1)</code> cancels top and bottom.</p>
+
+    <div class="codecap">6 · Draw the best-fit line</div>
+    <pre><code class="language-python">y_pred = b0 + b1 * df[<span class="tk-str">'Mileage'</span>]
+plt.scatter(x, y)
+plt.plot(x, y_pred)                <span class="tk-com"># the fitted line over the dots</span>
+plt.show()</code></pre>
+
+    <div class="codecap">7 · The proper way — statsmodels OLS</div>
+    <pre><code class="language-python">xc = sm.add_constant(x)            <span class="tk-com"># MUST add the constant → gives the β₀ column of 1s</span>
+ols_mod = sm.OLS(y, xc).fit()
+ols_mod.summary()                  <span class="tk-com"># R²=0.226, coefs, p-values, CI, F-test — all here</span>
+ols_mod.params                     <span class="tk-com"># const 327.086, Mileage -11.6905</span></code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — forgetting add_constant</b><code>sm.OLS</code> does <strong>not</strong> add an intercept for you. Skip <code>sm.add_constant(x)</code> and you fit a line forced through the origin (β₀ = 0) — wrong model, wrong numbers. sklearn's <code>LinearRegression()</code> adds it automatically; statsmodels does not.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">The payoff</b>The one <code>.summary()</code> call gives you everything in §C–§D: R² = 0.226, slope −11.69 (p = 0.063), intercept 327.09, 95% CIs, and Prob(F) = 0.063. Learn to read it and you can answer most "interpret the output" questions cold.</div>
+  </section>
+
+  <!-- ============ PRACTICE ============ -->
+  <section class="sec" id="practice" data-group="Exam" data-badge="✎">
+    <div class="sec-lead"><span class="num">✎</span><h2>Practice — worked from your actual QP</h2></div>
+    <p>These follow your model paper: <strong>pseudo-code</strong> for the applied questions, prose for interpretation. Click to reveal. The Session-2 answerable parts are worked here; the rest is flagged for other sessions.</p>
+
+    <details class="pcard">
+      <summary><span class="q">Q2 b</span> Retail sales: build MLR, compute MAE/RMSE/R², interpret coefficients, judge generalization <span class="mk">10 marks · pseudo-code</span></summary>
+      <div class="ans">
+        <p>Features: <code>Advertising_Spend, Number_of_Customers, Discount_Percentage, Previous_Month_Sales</code> → target monthly sales. <strong>This is pure Session 2.</strong></p>
+        <pre><code class="language-python"><span class="tk-com"># (a) split + build Multiple Linear Regression</span>
+<span class="tk-kw">from</span> sklearn.model_selection <span class="tk-kw">import</span> train_test_split
+<span class="tk-kw">from</span> sklearn.linear_model <span class="tk-kw">import</span> LinearRegression
+
+X = df.drop(<span class="tk-str">"Sales"</span>, axis=<span class="tk-num">1</span>);  y = df[<span class="tk-str">"Sales"</span>]
+X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=<span class="tk-num">0.2</span>, random_state=<span class="tk-num">42</span>)
+model = LinearRegression().fit(X_train, y_train)   <span class="tk-com"># OLS under the hood</span>
+
+<span class="tk-com"># (b) predict + evaluation metrics</span>
+<span class="tk-kw">from</span> sklearn.metrics <span class="tk-kw">import</span> mean_absolute_error, mean_squared_error, r2_score
+y_pred = model.predict(X_test)
+mae  = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+r2   = r2_score(y_test, y_pred)</code></pre>
+        <p><strong>(c) Interpret coefficients</strong> (holding others constant): <strong>Advertising_Spend = 2.8</strong> → each extra unit of ad spend raises predicted monthly sales by 2.8 units, other factors fixed (positive driver). <strong>Discount_Percentage = −0.7</strong> → each extra 1% discount <em>lowers</em> predicted sales by 0.7 units — discounting erodes revenue here.</p>
+        <p><strong>(d) Generalization:</strong> Training R² = 0.86, Testing R² = 0.81 — <strong>small gap</strong>, so the model generalizes well (not overfitting). Adjusted R² = 0.79 being close to R² confirms the predictors are genuinely useful, not padding. Verdict: a stable, deployable model.</p>
+      </div>
+    </details>
+
+    <details class="pcard">
+      <summary><span class="q">Q2 c</span> Employee salary: overfitting, residuals, assumptions, fixes <span class="mk">10 marks · partly Session 2</span></summary>
+      <div class="ans">
+        <p>Given Train R² = 0.96 / Test R² = 0.54, Train RMSE 4.2 / Test RMSE 17.8.</p>
+        <p><strong>(a) Problem — Session 2 core:</strong> a huge train-vs-test gap (0.96 → 0.54) with test error &gt;4× train error is textbook <strong>overfitting</strong> — the model memorised the training noise and fails to generalize.</p>
+        <pre><code class="language-python"><span class="tk-com"># (b) residual plot for the test set</span>
+resid = y_test - model.predict(X_test)
+sns.scatterplot(x=model.predict(X_test), y=resid)
+plt.axhline(<span class="tk-num">0</span>, ls=<span class="tk-str">"--"</span>)   <span class="tk-com"># residuals vs fitted</span></code></pre>
+        <p>A <strong>desirable residual plot</strong>: points scattered randomly around 0 with no pattern, roughly constant spread (homoscedastic), no curve — that means the linear form and assumptions hold.</p>
+        <p><strong>(c) Assumptions</strong> (extends slightly beyond the deck — see §gaps): <em>Linearity</em> (check: residuals-vs-fitted show no curve); <em>Homoscedasticity</em> — constant error variance (check: residual plot funnel shape, or Breusch–Pagan test); also <em>Normality of residuals</em> (Q–Q plot) and <em>No multicollinearity</em> (VIF). <strong>(d) Fixes:</strong> more training data, feature selection/fewer variables, regularisation (Ridge/Lasso), cross-validation. <strong>(e)</strong> implement e.g. Ridge and compare test R²/RMSE and CV score — a better model has a <em>smaller train-test gap</em>, not just higher training R².</p>
+        <div class="box info"><span class="ic">i</span><b class="lbl">Session-2 boundary</b>The overfitting diagnosis and R²/RMSE reading are Session 2. Formal assumption tests and Ridge/Lasso are other sessions — noted in §gaps.</div>
+      </div>
+    </details>
+
+    <details class="pcard">
+      <summary><span class="q">Q2 d</span> Used-car price: scaling, RFE, Ridge/Lasso, RMSE selection, feature engineering <span class="mk">10 marks · partly Session 2</span></summary>
+      <div class="ans">
+        <p><strong>Session-2 answerable parts:</strong></p>
+        <p><strong>(c/d) Comparing models by R²/RMSE:</strong> fit each model, then compare Training and Testing R² — the model with high <em>and</em> close train/test R² generalizes best. Given Ridge RMSE 2.9 vs Lasso RMSE 3.2, <strong>pick Ridge</strong> (lower test RMSE). But RMSE alone isn't everything: also weigh the train-test R² gap, interpretability, and whether Lasso's feature-zeroing is desirable — so no, RMSE shouldn't be the <em>only</em> criterion.</p>
+        <p><strong>(e) Feature engineering for non-linearity:</strong> if kilometers_driven vs price curves, add a <strong>log or polynomial term</strong> — e.g. <code>log(Kilometers_Driven)</code> or <code>Kilometers_Driven²</code> — so a linear model can capture the curve. It helps because the relationship becomes linear in the <em>transformed</em> feature.</p>
+        <div class="box info"><span class="ic">i</span><b class="lbl">Session-2 boundary</b>Scaling (§Session 1), RFE and Ridge/Lasso mechanics are other sessions (§gaps). The R²/RMSE-based model comparison and the interpretation are Session 2.</div>
+      </div>
+    </details>
+
+    <details class="pcard">
+      <summary><span class="q">Theory</span> "Explain OLS and derive/interpret the regression line" <span class="mk">likely viva / theory</span></summary>
+      <div class="ans">
+        <p><strong>Structure:</strong> model → objective → solution → interpretation.</p>
+        <p><strong>Model:</strong> <code>y = β₀ + β₁x + ε</code>, with ε the residual (actual − predicted). <strong>Objective (OLS):</strong> choose β₀, β₁ to minimise Σε² = Σ(y − (β₀+β₁x))². <strong>Solution:</strong> set ∂E/∂β₀ = ∂E/∂β₁ = 0 → two normal equations → <code>β₁ = Cov(X,Y)/Var(X)</code>, <code>β₀ = ȳ − β₁x̄</code>. <strong>Quality:</strong> SST = SSR + SSE, R² = SSR/SST = 1 − SSE/SST. <strong>Significance:</strong> t-test on β₁ (H₀: β₁ = 0), reject if p &lt; 0.05; F-test/ANOVA for the whole model. <strong>MLR:</strong> generalise to <code>β = (XᵀX)⁻¹XᵀY</code>, use Adjusted R² to compare models of different size.</p>
+      </div>
+    </details>
+
+    <div class="box info"><span class="ic">i</span><b class="lbl">The rest of the paper</b>1a/1b are Session 1 (your preprocessing kit); 2a is Session 1 too. 1c/1d/1e and 2e need other sessions — listed next. Everything regression-flavoured above is fully answerable from this kit.</div>
+  </section>
+
+  <!-- ============ GAPS ============ -->
+  <section class="sec" id="gaps" data-group="Exam" data-badge="!">
+    <div class="sec-lead"><span class="num">!</span><h2>What your exam tests that's NOT in Session 2</h2></div>
+    <p>So you don't walk in thinking regression is the whole paper. Grab these from their sessions.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>QP</th><th>Topic to revise elsewhere</th></tr></thead>
+        <tbody>
+          <tr><td>1a, 1b, 2a</td><td>Missing values, feature scaling, encoding, outliers, EDA — <strong>Session 1</strong> (your preprocessing exam kit)</td></tr>
+          <tr><td>1c</td><td>Bias–variance tradeoff; underfitting vs overfitting formally; regularisation/more data/CV as balancers</td></tr>
+          <tr><td>1d</td><td>Hyperparameters vs parameters; GridSearchCV / RandomizedSearchCV; whether tuning applies to plain LR</td></tr>
+          <tr><td>1e</td><td>Feature selection — Forward Selection, Backward Elimination, RFE (methodology &amp; trade-offs)</td></tr>
+          <tr><td>2c</td><td>Formal LR assumptions &amp; their tests (linearity, homoscedasticity, normality of residuals, independence, multicollinearity/VIF)</td></tr>
+          <tr><td>2d</td><td>Ridge vs Lasso (L2 vs L1), RFE code, scaling for penalised models</td></tr>
+          <tr><td>2e</td><td>k-fold cross-validation in Python; comparing CV score to test score</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Send me the other session notebooks</b>Upload the sessions covering bias–variance, tuning, feature selection, regularisation and cross-validation and I'll extend this kit with the same worked-answer treatment for 1c–1e and 2c–2e.</div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="sec" id="cheat" data-group="Exam" data-badge="≡">
+    <div class="sec-lead"><span class="num">≡</span><h2>Formula cheat sheet</h2></div>
+    <p>Night-before, one-glance reference — every formula in Session 2.</p>
+
+    <div class="codecap">The model</div>
+    <div class="box info" style="padding-top:16px"><span class="ic">i</span><b class="lbl">Equations</b>
+      Simple: <code>y = β₀ + β₁x + ε</code> &nbsp;·&nbsp; Multiple: <code>y = β₀ + β₁x₁ + … + βₙxₙ + ε</code><br>
+      Residual: <code>ε = y_actual − y_predicted</code>
+    </div>
+
+    <div class="codecap">Association</div>
+    <div class="eq" style="font-size:16px;text-align:left;margin:8px 0">
+      Cov(X,Y) = <span class="frac"><span class="num">Σ(Xᵢ−X̄)(Yᵢ−Ȳ)</span><span class="den">n−1</span></span> &nbsp;&nbsp; R = <span class="frac"><span class="num">Cov(x,y)</span><span class="den">σₓ·σᵧ</span></span> &nbsp;∈ [−1, 1]
+    </div>
+
+    <div class="codecap">OLS coefficients</div>
+    <div class="eq" style="font-size:16px;text-align:left;margin:8px 0">
+      β₁ = <span class="frac"><span class="num">Cov(X,Y)</span><span class="den">Var(X)</span></span> &nbsp;&nbsp; β₀ = Ȳ − β₁X̄ &nbsp;&nbsp; minimise Σ(yᵢ − ŷᵢ)²
+    </div>
+
+    <div class="codecap">Variation &amp; fit</div>
+    <div class="eq" style="font-size:16px;text-align:left;margin:8px 0">
+      SST = Σ(yᵢ−ȳ)² &nbsp; SSR = Σ(ŷᵢ−ȳ)² &nbsp; SSE = Σ(yᵢ−ŷᵢ)² &nbsp;·&nbsp; <strong>SST = SSR + SSE</strong><br>
+      R² = SSR/SST = 1 − SSE/SST &nbsp;&nbsp; R²<sub>adj</sub> = 1 − <span class="frac"><span class="num">(1−R²)(n−1)</span><span class="den">n−k−1</span></span>
+    </div>
+
+    <div class="codecap">Error metrics</div>
+    <div class="eq" style="font-size:15px;text-align:left;margin:8px 0">
+      MAE = <span class="frac"><span class="num">Σ|yᵢ−ŷᵢ|</span><span class="den">n</span></span> &nbsp;&nbsp; RMSE = √( <span class="frac"><span class="num">Σ(yᵢ−ŷᵢ)²</span><span class="den">n</span></span> ) &nbsp;&nbsp; Sₓᵧ = √( <span class="frac"><span class="num">Σ(yᵢ−ŷᵢ)²</span><span class="den">n−k</span></span> )
+    </div>
+
+    <div class="codecap">Inference</div>
+    <div class="eq" style="font-size:16px;text-align:left;margin:8px 0">
+      t = <span class="frac"><span class="num">β̂</span><span class="den">SE(β̂)</span></span> ~ t<sub>(n−2)</sub> &nbsp;·&nbsp; reject H₀ if p &lt; α &nbsp;·&nbsp; F₀ = MSR/MSE &nbsp;·&nbsp; MLR: β̂ = (X′X)⁻¹X′Y
+    </div>
+
+    <div class="codecap">Code you must know</div>
+    <pre><code class="language-python"><span class="tk-com"># statsmodels — full statistics</span>
+xc = sm.add_constant(x)               <span class="tk-com"># don't forget the intercept!</span>
+sm.OLS(y, xc).fit().summary()
+
+<span class="tk-com"># sklearn — prediction + metrics</span>
+model = LinearRegression().fit(X_train, y_train)
+y_pred = model.predict(X_test)
+mean_absolute_error(y_test, y_pred)                 <span class="tk-com"># MAE</span>
+np.sqrt(mean_squared_error(y_test, y_pred))         <span class="tk-com"># RMSE</span>
+r2_score(y_test, y_pred)                            <span class="tk-com"># R²</span></code></pre>
+
+    <div class="codecap">The 8 things examiners trap you on</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Trap</th><th>The right answer</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dependent vs independent</td><td>Dependent = target = Y; Independent = predictor = X</td></tr>
+          <tr><td>2</td><td>What OLS minimises</td><td>The <strong>sum of squared residuals</strong>, Σε² — not the raw errors</td></tr>
+          <tr><td>3</td><td>Interpreting β₁</td><td>Change in Y per 1-unit rise in X, <strong>on average, others held constant</strong></td></tr>
+          <tr><td>4</td><td>SSR vs SSE naming</td><td>SSR = explained; SSE = unexplained; SST = SSR + SSE — define your symbols</td></tr>
+          <tr><td>5</td><td>R² vs Adjusted R²</td><td>R² never falls when adding vars; Adj R² penalises useless ones (R²<sub>adj</sub> ≤ R²)</td></tr>
+          <tr><td>6</td><td>Significance</td><td>p &lt; 0.05 → keep; CI containing 0 → not significant</td></tr>
+          <tr><td>7</td><td>Overfitting signal</td><td>Big train-vs-test R² gap (e.g. 0.96 vs 0.54)</td></tr>
+          <tr><td>8</td><td>statsmodels intercept</td><td>Must call <code>sm.add_constant()</code>; sklearn adds it automatically</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>Built from the Session 2 slides (Simple &amp; Multiple Linear Regression) and the <code>carpremium.csv</code> faculty notebook, mapped to the SMLR ESA model paper. Formulas rendered in plain HTML so this file works offline. Upload the remaining session materials to extend the Practice section into 1c–1e and 2c–2e.</p>
+  </div>

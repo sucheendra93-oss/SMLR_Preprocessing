@@ -5,5 +5,12 @@
     "title": "Preprocessing Exam Kit",
     "eyebrow": "Data Preprocessing · BigMart Sales",
     "description": "Every line of the Session 1 notebook, explained mechanically and mapped to the SMLR model paper."
+  },
+  {
+    "id": "02",
+    "file": "02-linear-regression.html",
+    "title": "Linear Regression Exam Kit",
+    "eyebrow": "Machine Learning · Simple & Multiple Linear Regression",
+    "description": "Session 2 explained with analogies and formulas, from the carpremium.csv notebook, mapped to the SMLR model paper."
   }
 ]
