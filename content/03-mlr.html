@@ -1,0 +1,528 @@
+<div class="hero">
+  <span class="eyebrow">ML1 · Session 3 · House Price</span>
+  <h1>Multiple Linear Regression — Exam Kit</h1>
+  <p class="lede">Simple notes built from the faculty notebook: predict House <b>PRICE</b> from many features, check every assumption, drop weak features, and evaluate the model. Ends with a full solve of the Model QP.</p>
+</div>
+
+<!-- 1 -->
+<section class="sec" id="picture" data-group="Faculty Notebook" data-badge="1"><div class="sec-lead"><span class="num">1</span><h2>Big Picture &amp; Data</h2></div>
+<p><b>Multiple Linear Regression (MLR)</b> predicts one numeric target using <b>many</b> input variables.</p>
+<div class="eq">PRICE = b0 + b1·X1 + b2·X2 + … + bk·Xk</div>
+<ul>
+<li><b>Goal:</b> predict house <b>PRICE</b> from area characteristics.</li>
+<li><b>Simple LR (Session 2)</b> = 1 input. <b>MLR (Session 3)</b> = 2 or more inputs.</li>
+</ul>
+<div class="box tip"><b>Key features:</b> CRIM (crime rate), RM (avg rooms), AGE, DIS (distance to work centres), TAX, PTRATIO (pupil-teacher ratio), LSTAT (% lower-status), CHAS (river Y/N — the categorical one), and <b>PRICE</b> = target.</div>
+</section>
+
+<!-- 2 -->
+<section class="sec" id="libs" data-group="Faculty Notebook" data-badge="2"><div class="sec-lead"><span class="num">2</span><h2>Import Libraries</h2></div>
+<pre><code>import pandas as pd, numpy as np
+import matplotlib.pyplot as plt, seaborn as sns
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+import statsmodels.api as sm
+import statsmodels.stats.api as sms
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.graphics.gofplots import qqplot
+from scipy import stats
+from scipy.stats import shapiro</code></pre>
+<p><b>Why each one:</b></p>
+<ul>
+<li><code>StandardScaler</code> → put features on the same scale.</li>
+<li><code>statsmodels.api (sm)</code> → build OLS model + full summary.</li>
+<li><code>variance_inflation_factor</code> → check multicollinearity (VIF).</li>
+<li><code>qqplot</code>, <code>shapiro</code> → check residual normality.</li>
+<li><code>sms</code> → Breusch-Pagan test (homoscedasticity).</li>
+</ul>
+</section>
+
+<!-- 3 -->
+<section class="sec" id="prep" data-group="Faculty Notebook" data-badge="3"><div class="sec-lead"><span class="num">3</span><h2>Prepare the Data</h2></div>
+<pre><code>df_housing = pd.read_csv('housing_data_catg.csv')
+df_housing.head()      # first 5 rows
+df_housing.shape       # rows, columns
+df_housing.info()      # data types + non-null counts
+
+# drop the ID column (no predictive value)
+df_housing = df_housing.drop('RecNo', axis=1)</code></pre>
+<ul>
+<li><code>head / shape / info</code> → first look: size, columns, data types, missing counts.</li>
+<li><code>RecNo</code> is just a record number → <b>drop it</b>, it cannot help prediction.</li>
+</ul>
+<div class="box tip"><b>Exam term:</b> removing useless columns = <b>removing insignificant variables</b>.</div>
+</section>
+
+<!-- 4 -->
+<section class="sec" id="outlier" data-group="Faculty Notebook" data-badge="4"><div class="sec-lead"><span class="num">4</span><h2>Outlier Analysis &amp; Treatment</h2></div>
+<p><b>Outliers</b> = extreme values that pull the regression line and break assumptions.</p>
+<h3>Step 1 — See them (boxplots)</h3>
+<pre><code>df_housing.boxplot()                       # all variables
+df_housing.drop(['TAX','B'],axis=1).boxplot()   # drop big-scale cols for a clearer view
+df_housing[['NOX','RM','DIS']].boxplot()   # zoom into similar-range cols</code></pre>
+<p><b>Why drop TAX &amp; B first?</b> Their values are huge, so they flatten every other box. Removing them makes the smaller variables readable.</p>
+<h3>Step 2 — Remove them (IQR method)</h3>
+<pre><code>numeric_df = df_housing.select_dtypes(include=np.number)
+Q1 = numeric_df.quantile(0.25)
+Q3 = numeric_df.quantile(0.75)
+IQR = Q3 - Q1
+
+lower = Q1 - 1.5*IQR
+upper = Q3 + 1.5*IQR
+
+outliers = ((numeric_df < lower) | (numeric_df > upper)).any(axis=1)
+df_housing_clean = df_housing.loc[~outliers].copy()</code></pre>
+<ul>
+<li><b>IQR = Q3 − Q1</b> (middle 50% spread).</li>
+<li>Any point below <b>Q1 − 1.5·IQR</b> or above <b>Q3 + 1.5·IQR</b> = outlier.</li>
+<li><code>~outliers</code> keeps only the clean rows.</li>
+</ul>
+</section>
+
+<!-- 5 -->
+<section class="sec" id="missing" data-group="Faculty Notebook" data-badge="5"><div class="sec-lead"><span class="num">5</span><h2>Missing Value Analysis</h2></div>
+<pre><code>Total   = df_housing.isnull().sum().sort_values(ascending=False)
+Percent = (df_housing.isnull().sum()*100 / df_housing.isnull().count())
+missing_data = pd.concat([Total, Percent], axis=1,
+               keys=['Total','Percentage of Missing Values'])
+missing_data</code></pre>
+<ul>
+<li>Shows <b>how many</b> and <b>what %</b> of each column is missing.</li>
+<li>Common fixes: fill numeric with <b>mean/median</b>, categorical with <b>mode</b>, or drop if too many.</li>
+</ul>
+</section>
+
+<!-- 6 -->
+<section class="sec" id="scale" data-group="Faculty Notebook" data-badge="6"><div class="sec-lead"><span class="num">6</span><h2>Scaling &amp; add_constant</h2></div>
+<pre><code># split into features (X) and target (y)
+df_feature = df_housing_clean.drop('PRICE', axis=1)
+df_target  = df_housing_clean['PRICE']
+
+# scale ONLY the numeric features
+numeric_cols = df_feature.select_dtypes(include='number').columns
+scaler = StandardScaler()
+df_feature[numeric_cols] = scaler.fit_transform(df_feature[numeric_cols])
+
+# statsmodels needs an intercept column
+df_feature = sm.add_constant(df_feature)</code></pre>
+<ul>
+<li><b>StandardScaler</b> → each numeric feature becomes mean 0, std 1. Puts all features on the same footing so coefficients are comparable.</li>
+<li><b>Only numeric</b> columns are scaled (not the categorical CHAS).</li>
+<li><b>add_constant()</b> → adds a column of 1s so the model can learn the intercept b0.</li>
+</ul>
+<div class="box tip"><b>Exam:</b> statsmodels OLS does <b>not</b> add the intercept for you — you must <code>sm.add_constant()</code>.</div>
+</section>
+
+<!-- 7 -->
+<section class="sec" id="before" data-group="Faculty Notebook" data-badge="7"><div class="sec-lead"><span class="num">7</span><h2>Assumptions to Check BEFORE Building</h2></div>
+<p>Two assumptions are checked <b>before</b> the model:</p>
+
+<h3>7.1 Dependent variable must be numeric</h3>
+<pre><code>df_target.dtype   # must be int/float → satisfied</code></pre>
+<div class="box"><b>Why:</b> regression predicts numbers. If the target were categories (0/1 disease), it would be a <b>classification</b> problem, not regression.</div>
+
+<h3>7.2 No (or little) Multicollinearity</h3>
+<p><b>Multicollinearity</b> = input variables are highly correlated <b>with each other</b>. It makes coefficients unstable and unreliable.</p>
+
+<h4>a) Correlation heatmap</h4>
+<pre><code>sns.heatmap(df_feature.corr(numeric_only=True), annot=True, vmin=-1, vmax=1)
+# show only strong pairs (>0.6 or <-0.6)
+sns.heatmap(df_feature.corr()[np.abs(df_feature.corr()) > 0.6], annot=True)</code></pre>
+<p>Values near <b>+1 / −1</b> = strong correlation. But the heatmap alone is not enough → use VIF.</p>
+
+<h4>b) Variance Inflation Factor (VIF)</h4>
+<div class="eq">VIF = 1 / (1 − R²)</div>
+<pre><code>vif = pd.DataFrame()
+vif["VIF_Factor"] = [variance_inflation_factor(df_num.values, i)
+                     for i in range(df_num.shape[1])]
+vif["Features"] = df_num.columns
+vif.sort_values('VIF_Factor', ascending=False)
+
+# highest VIF was RAD → drop it, then recompute
+df_num = df_num.drop('RAD', axis=1)</code></pre>
+<div class="tbl-wrap"><table>
+<tr><th>VIF value</th><th>Meaning</th></tr>
+<tr><td>VIF = 1</td><td>No correlation</td></tr>
+<tr><td>1 &lt; VIF &lt; 5</td><td>Moderate — usually OK</td></tr>
+<tr><td>VIF &gt; 5</td><td>High — drop / fix the variable</td></tr>
+</table></div>
+<div class="box tip"><b>What the notebook did:</b> <code>RAD</code> had the highest VIF → dropped it → recomputed VIF → multicollinearity resolved.</div>
+</section>
+
+<!-- 8 -->
+<section class="sec" id="dummy" data-group="Faculty Notebook" data-badge="8"><div class="sec-lead"><span class="num">8</span><h2>Categorical → Dummy Variables</h2></div>
+<p>Regression needs <b>numbers</b>, so the categorical column (CHAS = river Y/N) is converted using <b>dummy encoding</b>.</p>
+<pre><code>df_feature = pd.get_dummies(data=df_feature, drop_first=True, dtype=np.uint)</code></pre>
+<ul>
+<li><b>Dummy variable</b> = a 0/1 column for a category.</li>
+<li>A variable with <b>N</b> categories needs <b>N − 1</b> dummies (<code>drop_first=True</code>).</li>
+<li>Dropping one avoids the <b>dummy trap</b> (a new multicollinearity).</li>
+</ul>
+<h3>Worked example — 3 categories → 2 dummies</h3>
+<p>Manufacturer takes <b>3</b> values (Ford, Honda, Tata) → make <b>3 − 1 = 2</b> dummies. Ford is the dropped <b>base</b> category.</p>
+<div class="tbl-wrap"><table>
+<tr><th>Value</th><th>Mfr_Honda</th><th>Mfr_Tata</th></tr>
+<tr><td>Ford (base)</td><td>0</td><td>0</td></tr>
+<tr><td>Honda</td><td>1</td><td>0</td></tr>
+<tr><td>Tata</td><td>0</td><td>1</td></tr>
+</table></div>
+<div class="eq">Premium = b0 + b1·Mileage + b2·Mfr_Honda + b3·Mfr_Tata</div>
+<p><b>How the dummy changes the intercept</b> (slope b1 stays the same, only the start point shifts):</p>
+<div class="tbl-wrap"><table>
+<tr><th>Category</th><th>Equation becomes</th><th>Intercept</th></tr>
+<tr><td>Ford</td><td>b0 + b1·Mileage</td><td>b0 (base)</td></tr>
+<tr><td>Honda</td><td>(b0 + b2) + b1·Mileage</td><td>b0 + b2</td></tr>
+<tr><td>Tata</td><td>(b0 + b3) + b1·Mileage</td><td>b0 + b3</td></tr>
+</table></div>
+<div class="box tip"><b>Read it as:</b> b2 = how much Honda's price differs from Ford; b3 = how much Tata differs from Ford. Each dummy just moves the line up or down.</div>
+</section>
+
+<!-- 9 -->
+<section class="sec" id="build" data-group="Faculty Notebook" data-badge="9"><div class="sec-lead"><span class="num">9</span><h2>Build the MLR Model</h2></div>
+<pre><code>MLR_full_model = sm.OLS(df_target, df_feature).fit()
+print(MLR_full_model.summary())</code></pre>
+<p>The summary gives everything: coefficients, p-values, R², Adjusted R², F-statistic, Durbin-Watson.</p>
+<h3>Score card (compare models)</h3>
+<pre><code>score_card = pd.DataFrame(columns=['Model_Name','R-squared','Adj.R-sqr','MSE'])
+
+y_pred = MLR_full_model.fittedvalues
+score_card.loc[len(score_card)] = ['Full Model',
+    MLR_full_model.rsquared, MLR_full_model.rsquared_adj,
+    mean_squared_error(df_target, y_pred)]</code></pre>
+<div class="box tip"><b>Why a score card?</b> Every time we change the model (drop a feature, add interaction), we add one row → easy to see which model is best.</div>
+</section>
+
+<!-- 10 -->
+<section class="sec" id="after" data-group="Faculty Notebook" data-badge="10"><div class="sec-lead"><span class="num">10</span><h2>Assumptions to Check AFTER Building</h2></div>
+<p>Four assumptions are checked on the <b>residuals</b> (residual = actual − predicted) after the model is built.</p>
+
+<h3>10.1 Linear Relationship</h3>
+<pre><code>plt.scatter(MLR_vif_model.fittedvalues, MLR_vif_model.resid)
+plt.axhline(0)</code></pre>
+<ul><li>Plot residuals vs fitted values (and vs each predictor).</li>
+<li><b>Good:</b> points scattered randomly around 0, <b>no pattern</b> → relationship is linear.</li></ul>
+
+<h3>10.2 No Autocorrelation <span class="pill">Durbin-Watson</span></h3>
+<ul>
+<li>Autocorrelation = residuals are correlated with each other (a pattern over order).</li>
+<li>Read the <b>Durbin-Watson</b> value from <code>model.summary()</code>.</li>
+</ul>
+<div class="tbl-wrap"><table>
+<tr><th>DW value</th><th>Meaning</th></tr>
+<tr><td>0 – 2</td><td>Positive autocorrelation</td></tr>
+<tr><td><b>≈ 2</b></td><td><b>No autocorrelation (good)</b></td></tr>
+<tr><td>2 – 4</td><td>Negative autocorrelation</td></tr>
+</table></div>
+<div class="box tip"><b>Notebook result:</b> DW ≈ <b>1.88</b> (near 2) → assumption satisfied.</div>
+
+<h3>10.3 Homoscedasticity <span class="pill">Breusch-Pagan</span></h3>
+<p>Residuals should have <b>constant variance</b> (homoscedastic). Non-constant variance = <b>heteroscedasticity</b> (funnel shape in the plot).</p>
+<pre><code>bp = sms.het_breuschpagan(MLR_vif_model.resid, df_feature_vif)
+print('Test stat:', bp[2])
+print('P value:',   bp[3])</code></pre>
+<ul>
+<li><b>H₀:</b> errors are homoscedastic (constant variance).</li>
+<li>If <b>p &gt; 0.05</b> → keep H₀ → homoscedastic ✅.</li>
+<li>If <b>p &lt; 0.05</b> → heteroscedastic ❌.</li>
+</ul>
+<h4>Goldfeld-Quandt test <span class="pill">alternative</span></h4>
+<p>Another test for the <b>same</b> homoscedasticity assumption.</p>
+<ul>
+<li><b>H₀:</b> errors are homoscedastic (equal variance).</li>
+<li><b>H₁:</b> errors are heteroscedastic (unequal variance).</li>
+<li><b>Decision:</b> <b>p &lt; 0.05</b> → reject H₀ → heteroscedasticity ❌. <b>p &gt; 0.05</b> → homoscedastic ✅.</li>
+</ul>
+<pre><code>from statsmodels.stats.diagnostic import het_goldfeldquandt
+stat, p_value, _ = het_goldfeldquandt(MLR_vif_model.resid, df_feature_vif)</code></pre>
+
+<h3>10.4 Normality of Residuals <span class="pill">Q-Q + Shapiro</span></h3>
+<pre><code>qqplot(MLR_vif_model.resid, line='s')          # points on the line = normal
+
+stat, p_value = shapiro(MLR_vif_model.resid)   # Shapiro-Wilk test
+sns.histplot(MLR_vif_model.resid, kde=True)    # bell shape = normal</code></pre>
+<ul>
+<li><b>Q-Q plot:</b> residual points lie on the 45° line → normal.</li>
+<li><b>Shapiro-Wilk:</b> H₀ = residuals are normal. <b>p &gt; 0.05</b> → normal ✅.</li>
+</ul>
+<h4>Jarque-Bera test <span class="pill">alternative</span></h4>
+<p>Another normality test, based on the <b>skewness</b> and <b>kurtosis</b> of the residuals. (It also appears directly in <code>model.summary()</code>.)</p>
+<div class="eq">JB = (n/6) · [ S² + ¼(K − 3)² ]&nbsp;&nbsp;→ S = skewness, K = kurtosis</div>
+<ul>
+<li><b>H₀:</b> residuals are normally distributed (skewness ≈ 0, kurtosis ≈ 3).</li>
+<li><b>H₁:</b> residuals are not normally distributed.</li>
+<li><b>Decision:</b> <b>p &gt; 0.05</b> → normality satisfied ✅. <b>p &lt; 0.05</b> → not normal ❌.</li>
+</ul>
+</section>
+
+<!-- 11 -->
+<section class="sec" id="select" data-group="Faculty Notebook" data-badge="11"><div class="sec-lead"><span class="num">11</span><h2>Feature Selection (drop insignificant)</h2></div>
+<p>Keep only features that actually matter. A feature is <b>insignificant</b> if its <b>p-value &gt; 0.05</b>.</p>
+<pre><code>p_values = MLR_vif_model.pvalues
+p_values.sort_values(ascending=False)   # biggest p-value = most insignificant</code></pre>
+<p><b>Method — Backward Elimination (drop one-by-one):</b></p>
+<ol>
+<li>Find the feature with the highest p-value (&gt; 0.05).</li>
+<li>Drop it, rebuild the model.</li>
+<li>Repeat until all remaining features have p &lt; 0.05.</li>
+</ol>
+<p>Order dropped in the notebook: <b>B → CRIM → ZN → INDUS → NOX</b>.</p>
+<pre><code>df_significant = df_feature_vif.drop(['B','CRIM','ZN','INDUS','NOX'], axis=1)
+MLR_sig = sm.OLS(df_target, df_significant).fit()</code></pre>
+<div class="box tip"><b>Key observation:</b> as weak features are dropped, <b>R² drops slightly</b> but <b>Adjusted R² rises</b> — the model gets simpler and better. (In one iteration Adj R² dipped, showing that feature was borderline useful.)</div>
+</section>
+
+<!-- 12 -->
+<section class="sec" id="interaction" data-group="Faculty Notebook" data-badge="12"><div class="sec-lead"><span class="num">12</span><h2>Interaction Effect</h2></div>
+<p><b>Interaction</b> = the effect of one feature depends on another. We test it by adding their <b>product</b> as a new feature.</p>
+<pre><code>df_interaction = df_significant.copy()
+df_interaction['RM_LSTAT'] = df_interaction['RM'] * df_interaction['LSTAT']
+
+MLR_interaction = sm.OLS(df_target, df_interaction).fit()</code></pre>
+<ul>
+<li>New feature <code>RM_LSTAT</code> = RM × LSTAT.</li>
+<li>Add it to the score card and check: did R² / Adj R² improve?</li>
+<li>Interaction does <b>not</b> mean the variables are collinear.</li>
+</ul>
+<div class="box"><b>Everyday example:</b> salt + sugar + water → the taste depends on the <i>combination</i>, not each alone. Same idea for features.</div>
+</section>
+
+<!-- 13 -->
+<section class="sec" id="eval" data-group="Faculty Notebook" data-badge="13"><div class="sec-lead"><span class="num">13</span><h2>Model Evaluation</h2></div>
+
+<h3>R-squared</h3>
+<div class="eq">R² = Explained variation / Total variation = SSR / SST</div>
+<pre><code>MLR_sig.rsquared</code></pre>
+<p>% of variation in PRICE explained by the features. R² = 0.87 → 87% explained. <b>Always increases</b> when you add features (even useless ones).</p>
+
+<h3>Adjusted R-squared</h3>
+<div class="eq">Adj R² = 1 − [(1 − R²)(n − 1) / (n − k − 1)]</div>
+<pre><code>MLR_sig.rsquared_adj
+# manual:
+n = len(df_significant); k = len(df_significant.columns)
+adj = 1 - (1 - r_sq)*(n-1)/(n-k-1)</code></pre>
+<p>Like R² but <b>penalises</b> useless features. Best metric to compare MLR models. n = rows, k = number of features.</p>
+
+<h3>Overall F-test</h3>
+<div class="eq">F = (SST−SSE)/k ÷ SSE/(n−k−1)</div>
+<pre><code>MLR_sig.fvalue      # F statistic
+MLR_sig.f_pvalue    # p-value of the F-test</code></pre>
+<ul>
+<li>Tests whether the <b>whole model</b> is significant (is at least one feature useful?). Similar to ANOVA for regression.</li>
+</ul>
+<div class="box">
+<p><b>Hypotheses:</b></p>
+<ul>
+<li><b>H₀:</b> β₁ = β₂ = … = βₖ = 0 &nbsp;(no feature helps — model useless).</li>
+<li><b>H₁:</b> at least one β ≠ 0 &nbsp;(at least one feature helps).</li>
+</ul>
+<p><b>Decision rule:</b> <b>p &lt; 0.05</b> → reject H₀ → model is <b>significant</b> ✅. &nbsp; p &gt; 0.05 → model not significant ❌.</p>
+</div>
+
+<h3>Error metrics</h3>
+<div class="tbl-wrap"><table>
+<tr><th>Metric</th><th>Meaning</th><th>Code</th></tr>
+<tr><td><b>MAE</b></td><td>Mean of |actual − predicted|. Easy to read.</td><td><code>mean_absolute_error</code></td></tr>
+<tr><td><b>MSE</b></td><td>Mean of squared errors. Punishes big errors.</td><td><code>mean_squared_error</code></td></tr>
+<tr><td><b>RMSE</b></td><td>√MSE. Same unit as target.</td><td><code>np.sqrt(mse)</code></td></tr>
+</table></div>
+<div class="box tip"><b>Rule:</b> higher R²/Adj R² = better; lower MAE/RMSE = better.</div>
+</section>
+
+<!-- Recipe -->
+<section class="sec" id="recipe" data-group="Exam" data-badge="★"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Recipe (write this order)</h2></div>
+<div class="answer">
+<p><b>Definition:</b> Multiple Linear Regression predicts one numeric target using two or more predictors: <code>y = b0 + b1x1 + … + bkxk</code>.</p>
+<p><b>Full workflow:</b></p>
+<ol>
+<li>Read data; check <code>head, shape, info</code>; drop ID columns.</li>
+<li>Treat <b>outliers</b> (boxplot + IQR).</li>
+<li>Handle <b>missing values</b>.</li>
+<li><b>Scale</b> numeric features; <code>add_constant()</code>.</li>
+<li><b>Before-model assumptions:</b> target numeric + no multicollinearity (correlation + VIF, drop high-VIF feature).</li>
+<li>Encode categorical variables → <b>N−1 dummies</b>.</li>
+<li>Build model: <code>sm.OLS(y, X).fit()</code>; read summary.</li>
+<li><b>After-model assumptions:</b> linearity (residual plot), no autocorrelation (Durbin-Watson ≈ 2), homoscedasticity (Breusch-Pagan), normal residuals (Q-Q + Shapiro-Wilk).</li>
+<li><b>Feature selection:</b> drop features with p &gt; 0.05 one-by-one (backward elimination).</li>
+<li>Try an <b>interaction</b> feature; keep if Adj R² improves.</li>
+<li><b>Evaluate:</b> R², Adjusted R², F-test, RMSE/MAE.</li>
+</ol>
+</div>
+</section>
+
+<!-- QP -->
+<section class="sec" id="qp" data-group="Exam" data-badge="QP"><div class="sec-lead"><span class="num">QP</span><h2>Model QP — Full Solve</h2></div>
+<p><b>SMLR ESA · 3 Hrs · 100 marks.</b> Section A = theory (50), Section B = pseudo/Python code (50).</p>
+
+<h3>Section A — Theory (5 × 10)</h3>
+
+<h4>A1. Handling missing values (10)</h4>
+<ul>
+<li><b>Deletion</b> — drop rows/columns. Use only when very few are missing. Simple, but loses data.</li>
+<li><b>Mean/Median imputation</b> — fill numeric gaps. Median if outliers present. Keeps rows, but reduces variance.</li>
+<li><b>Mode imputation</b> — fill categorical gaps with the most frequent value.</li>
+<li><b>Forward/Backward fill</b> — carry nearby value; good for time-series.</li>
+<li><b>Model-based (KNN / regression)</b> — predict the missing value. Most accurate, most costly.</li>
+</ul>
+<div class="box tip"><b>Also mention:</b> spot <b>non-standard</b> missing values like "NA", "?", "-" and convert them to real NaN first.</div>
+
+<h4>A2. Why feature scaling matters (10)</h4>
+<ul>
+<li>Features on different scales (Area in 1000s vs Bedrooms 1–5) make distance/gradient methods biased toward big-number features.</li>
+<li><b>Standardization</b> (StandardScaler): mean 0, std 1 → <code>(x − μ)/σ</code>.</li>
+<li><b>Normalization</b> (MinMaxScaler): squeeze to 0–1 → <code>(x − min)/(max − min)</code>.</li>
+<li><b>Needs scaling:</b> KNN, SVM, Gradient Descent, PCA, Ridge/Lasso.</li>
+<li><b>Doesn't need scaling:</b> plain OLS, Decision Trees, Random Forest.</li>
+</ul>
+
+<h4>A3. Bias-Variance tradeoff (10)</h4>
+<ul>
+<li><b>Bias</b> = error from too-simple model → <b>underfitting</b> (bad on train AND test).</li>
+<li><b>Variance</b> = error from too-complex model → <b>overfitting</b> (great on train, bad on test).</li>
+<li><b>Tradeoff:</b> lowering one raises the other; aim for the <b>balance</b> with lowest test error.</li>
+<li><b>Achieve balance:</b> cross-validation, regularization (Ridge/Lasso), pick right complexity, more data.</li>
+</ul>
+
+<h4>A4. Hyperparameters vs parameters + tuning (10)</h4>
+<ul>
+<li><b>Parameters</b> = learned <b>from data</b> (e.g. regression coefficients b0, b1).</li>
+<li><b>Hyperparameters</b> = set <b>by you before</b> training (e.g. Ridge/Lasso α, K in KNN).</li>
+<li><b>Plain Linear Regression:</b> essentially <b>no</b> hyperparameter to tune (OLS solves directly). But Ridge/Lasso versions have α → yes, tuning applies there.</li>
+<li><b>3 tuning techniques:</b> Grid Search, Random Search, Bayesian Optimization (bonus: k-fold CV to score each setting).</li>
+</ul>
+
+<h4>A5. Feature selection — FFS, BE, RFE (10)</h4>
+<div class="tbl-wrap"><table>
+<tr><th>Method</th><th>How it works</th><th>Note</th></tr>
+<tr><td><b>Forward (FFS)</b></td><td>Start empty; add the best feature each step.</td><td>Fast for few features; may miss combos.</td></tr>
+<tr><td><b>Backward (BE)</b></td><td>Start with all; drop the weakest (highest p) each step.</td><td>Used in the notebook.</td></tr>
+<tr><td><b>RFE</b></td><td>Fit model, rank features, remove the weakest, repeat.</td><td>Uses model importance; needs an estimator.</td></tr>
+</table></div>
+
+<h3>Section B — Coding (5 × 10)</h3>
+<p><b>Q2 a–d = pseudo code, Q2 e = Python code.</b></p>
+
+<h4>B-a. Real-estate price — EDA &amp; preprocessing (10)</h4>
+<div class="answer">
+<pre><code># a) inspect + fix missing (incl. "NA" text)
+df = read_csv(data)
+df.replace("NA", NaN)
+df.info(); df.isnull().sum()
+df['Area'].fillna(median); df['Age'].fillna(median)   # justify: robust to outliers
+
+# b) encode categorical + split
+X = get_dummies(df.drop('Price'), drop_first=True)
+y = df['Price']
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=1)
+
+# c) relationship Area vs Price
+scatter(Area, Price); df.corr()      # pick feature with highest |corr| to Price
+
+# d) outliers in Area (IQR)
+Q1,Q3 = Area.quantile(.25), Area.quantile(.75); IQR=Q3-Q1
+flag points < Q1-1.5*IQR or > Q3+1.5*IQR
+# decide: remove if data error / very few; retain if genuine + many
+
+# e) two EDA observations, e.g.
+#    "Area has strong positive correlation with Price"
+#    "Location affects Price → keep the dummy variables"</code></pre>
+</div>
+
+<h4>B-b. Retail monthly sales — MLR + metrics (10)</h4>
+<div class="answer">
+<pre><code># a) split + train MLR
+X = df.drop('Sales'); y = df['Sales']
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=1)
+model = LinearRegression().fit(X_train, y_train)
+
+# b) predict + metrics
+pred = model.predict(X_test)
+MAE  = mean_absolute_error(y_test, pred)
+RMSE = sqrt(mean_squared_error(y_test, pred))
+R2   = r2_score(y_test, pred)</code></pre>
+<p><b>c) Interpret coefficients</b> (Advertising_Spend = +2.8, Discount_Percentage = −0.7):</p>
+<ul>
+<li><b>+2.8:</b> each 1 unit more ad spend → sales rise by 2.8 units (others fixed).</li>
+<li><b>−0.7:</b> each 1% more discount → sales <b>fall</b> by 0.7 units (others fixed).</li>
+</ul>
+<p><b>d) Generalization</b> (Train R² 0.86, Test R² 0.81, Adj R² 0.79): train and test are close → <b>good generalization, no overfitting</b>. The model works well on unseen data.</p>
+</div>
+
+<h4>B-c. Employee salary — overfitting diagnosis (10)</h4>
+<div class="answer">
+<p><b>a) Problem:</b> Train R² 0.96 but Test R² 0.54 (RMSE 4.2 → 17.8). Big train-test gap = <b>overfitting</b> (high variance).</p>
+<pre><code># b) residual plot on test
+resid = y_test - model.predict(X_test)
+scatter(model.predict(X_test), resid); axhline(0)
+# desirable: random cloud around 0, no funnel, no pattern</code></pre>
+<p><b>c) Two assumptions to check + test:</b></p>
+<ul>
+<li><b>Homoscedasticity</b> → Breusch-Pagan test / residual-vs-fitted plot.</li>
+<li><b>Normality of residuals</b> → Shapiro-Wilk test / Q-Q plot.</li>
+<li>(or No multicollinearity → VIF; No autocorrelation → Durbin-Watson.)</li>
+</ul>
+<p><b>d) Two fixes for generalization:</b> use <b>regularization</b> (Ridge/Lasso) and <b>reduce features</b> / add more data / cross-validation.</p>
+<pre><code># e) implement Ridge and compare
+ridge = Ridge(alpha=1.0).fit(X_train, y_train)
+# better if Test R² rises AND train-test gap shrinks</code></pre>
+</div>
+
+<h4>B-d. Used-car price — scaling, RFE, Ridge/Lasso (10)</h4>
+<div class="answer">
+<p><b>a) Preprocessing:</b> encode Brand/Fuel_Type (dummies); scale numeric features. <b>Scaling needed?</b> Not for plain OLS, but <b>yes for Ridge/Lasso</b> (penalty is scale-sensitive) → scale.</p>
+<pre><code># b) RFE feature selection
+rfe = RFE(LinearRegression(), n_features_to_select=5).fit(X_train, y_train)
+X_train.columns[rfe.support_]
+
+# c) compare 3 models by Train/Test R²
+for m in [LinearRegression(), Ridge(alpha=1), Lasso(alpha=0.1)]:
+    m.fit(X_train,y_train); print(m.score(X_train,y_train), m.score(X_test,y_test))</code></pre>
+<p><b>d) Ridge RMSE 2.9 vs Lasso 3.2:</b> pick <b>Ridge</b> (lower test RMSE). But RMSE alone isn't enough — also check Adj R², overfitting gap, interpretability, and whether Lasso's feature-dropping is wanted.</p>
+<p><b>e) Non-linear kilometers vs price:</b> add a <b>polynomial / log feature</b> (e.g. <code>Kilometers²</code> or <code>log(Kilometers)</code>) so a straight-line model can capture the curve.</p>
+</div>
+
+<h4>B-e. Banking — Cross-Validation (Python code, 10)</h4>
+<div class="answer">
+<pre><code>from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+model = LinearRegression().fit(X_train, y_train)
+
+# 5-fold cross validation
+cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='r2')
+print("Avg CV score:", cv_scores.mean())
+
+test_score = model.score(X_test, y_test)
+print("Test score:", test_score)
+
+# Comment: if avg CV ≈ test score → stable, generalizes well.
+#          if CV >> test → overfitting / unstable model.</code></pre>
+</div>
+</section>
+
+<!-- Quick -->
+<section class="sec" id="quick" data-group="Exam" data-badge="≡"><div class="sec-lead"><span class="num">≡</span><h2>Quick Revision</h2></div>
+<div class="tbl-wrap"><table>
+<tr><th>Term</th><th>One-line meaning</th></tr>
+<tr><td>MLR</td><td>Predict numeric target from many features.</td></tr>
+<tr><td>add_constant()</td><td>Adds intercept column for statsmodels OLS.</td></tr>
+<tr><td>IQR outlier</td><td>&lt; Q1−1.5·IQR or &gt; Q3+1.5·IQR.</td></tr>
+<tr><td>StandardScaler</td><td>Mean 0, std 1.</td></tr>
+<tr><td>Multicollinearity</td><td>Features correlated with each other. Check with VIF.</td></tr>
+<tr><td>VIF &gt; 5</td><td>High → drop the feature.</td></tr>
+<tr><td>Dummy (N−1)</td><td>Encode categories; drop_first avoids the trap.</td></tr>
+<tr><td>Durbin-Watson ≈ 2</td><td>No autocorrelation (good).</td></tr>
+<tr><td>Breusch-Pagan / Goldfeld-Quandt</td><td>Homoscedasticity tests. p&gt;0.05 = good.</td></tr>
+<tr><td>Q-Q / Shapiro / Jarque-Bera</td><td>Residual normality. p&gt;0.05 = normal. (JB uses skewness &amp; kurtosis.)</td></tr>
+<tr><td>p-value &gt; 0.05</td><td>Feature insignificant → drop it.</td></tr>
+<tr><td>Interaction</td><td>Product of two features (RM×LSTAT).</td></tr>
+<tr><td>R²</td><td>% variation explained. Always rises with features.</td></tr>
+<tr><td>Adjusted R²</td><td>R² penalised for useless features. Compare models.</td></tr>
+<tr><td>F-test</td><td>Is the whole model significant? p&lt;0.05 = yes.</td></tr>
+<tr><td>RMSE / MAE</td><td>Error size. Lower = better.</td></tr>
+<tr><td>Overfitting</td><td>Train ≫ Test score. Fix: Ridge/Lasso, fewer features, CV.</td></tr>
+</table></div>
+</section>

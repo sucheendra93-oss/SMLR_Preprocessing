@@ -26,5 +26,12 @@
     "title": "Linear Regression — Simple",
     "eyebrow": "ML1 · Session 2 · Simple version",
     "description": "A shorter, plainer pass over the same Session 2 notebook — code, why it's used, and a ready-to-write exam answer."
+  },
+  {
+    "id": "03",
+    "file": "03-mlr.html",
+    "title": "Multiple Linear Regression Exam Kit",
+    "eyebrow": "ML1 · Session 3 · House Price",
+    "description": "The full faculty MLR notebook, every regression assumption before and after building, model evaluation, and a complete solve of the Model QP."
   }
 ]
