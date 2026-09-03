@@ -33,5 +33,12 @@
     "title": "Multiple Linear Regression Exam Kit",
     "eyebrow": "ML1 · Session 3 · House Price",
     "description": "The full faculty MLR notebook, every regression assumption before and after building, model evaluation, and a complete solve of the Model QP."
+  },
+  {
+    "id": "04",
+    "file": "04-feature-selection.html",
+    "title": "Feature Selection Exam Kit",
+    "eyebrow": "ML1 · Session 4 · Appliances Energy",
+    "description": "Transform skewed variables, scale features, then select only what matters with forward, backward, stepwise and RFE — coded and explained from the faculty notebook."
   }
 ]

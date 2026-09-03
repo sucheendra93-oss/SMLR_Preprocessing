@@ -1,146 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Feature Selection Exam Kit</title>
-<meta name="description" content="Session 4 faculty notebook made simple: feature transformation, scaling, and feature selection (forward, backward, stepwise, RFE) on the Appliances Energy data — every step coded and explained.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
-<style>
-:root{
-  --bg:#f7f5f0; --panel:#ffffff; --ink:#22201c; --soft:#5d5a52; --line:#e4e0d6;
-  --accent:#1a6b5a; --accent2:#b4531f; --code-bg:#faf8f3; --code-ink:#2b2925;
-  --tip-bg:#eef5f2; --tip-line:#bcdccf; --box-bg:#f4f1ea; --pill:#e7efec;
-  --ok:#1a7a4a; --warn:#b4531f; --shadow:0 1px 2px rgba(0,0,0,.05);
-}
-:root:not([data-theme="light"]){}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#16161a; --panel:#1e1f24; --ink:#eceae4; --soft:#a8a49a; --line:#33343b;
-    --accent:#5fd0b4; --accent2:#e59a5f; --code-bg:#181a1f; --code-ink:#d7d4cc;
-    --tip-bg:#16302a; --tip-line:#2c5346; --box-bg:#23242a; --pill:#22332e;
-    --ok:#5fd0a0; --warn:#e59a5f; --shadow:0 1px 2px rgba(0,0,0,.3);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#16161a; --panel:#1e1f24; --ink:#eceae4; --soft:#a8a49a; --line:#33343b;
-  --accent:#5fd0b4; --accent2:#e59a5f; --code-bg:#181a1f; --code-ink:#d7d4cc;
-  --tip-bg:#16302a; --tip-line:#2c5346; --box-bg:#23242a; --pill:#22332e;
-  --ok:#5fd0a0; --warn:#e59a5f; --shadow:0 1px 2px rgba(0,0,0,.3);
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.65;}
-.shell{display:grid;grid-template-columns:290px minmax(0,1fr);gap:0;max-width:1220px;margin:0 auto;}
-/* Sidebar */
-aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
-  border-right:1px solid var(--line);padding:22px 18px;background:var(--panel);}
-.brand{margin:0 0 14px;font-family:"Newsreader",serif;font-size:19px;line-height:1.2;}
-.brand a{color:var(--ink);text-decoration:none;font-weight:600;display:block;}
-.brand small{display:block;color:var(--soft);font-size:12px;font-weight:400;margin-top:3px;
-  font-family:"IBM Plex Sans",sans-serif;}
-.tog{display:flex;gap:4px;margin:0 0 16px;background:var(--box-bg);padding:4px;border-radius:9px;}
-.tog button{flex:1;border:0;background:transparent;color:var(--soft);font:inherit;font-size:12px;
-  padding:5px 4px;border-radius:6px;cursor:pointer;}
-.tog button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow);font-weight:600;}
-nav{font-size:13.5px;}
-.grp{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);
-  margin:16px 0 6px;font-weight:600;}
-nav a{display:flex;gap:9px;align-items:baseline;color:var(--soft);text-decoration:none;
-  padding:4px 8px;border-radius:6px;margin:1px 0;}
-nav a:hover{background:var(--box-bg);color:var(--ink);}
-nav a.active{background:var(--tip-bg);color:var(--accent);font-weight:600;}
-nav a .n{color:var(--accent2);font-weight:600;font-size:12px;min-width:22px;font-family:"JetBrains Mono",monospace;}
-/* Main */
-main{padding:34px 40px 90px;min-width:0;}
-.hero{border-bottom:2px solid var(--line);padding-bottom:22px;margin-bottom:8px;}
-.eyebrow{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent2);font-weight:600;margin-bottom:8px;}
-.hero h1{font-family:"Newsreader",serif;font-weight:600;font-size:38px;line-height:1.1;margin:0 0 12px;}
-.lede{color:var(--soft);font-size:17px;margin:0;max-width:70ch;}
-.sec{padding:30px 0;border-bottom:1px solid var(--line);}
-.sec-lead{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
-.sec-lead .num{display:inline-grid;place-items:center;min-width:34px;height:34px;border-radius:9px;
-  background:var(--accent);color:#fff;font-weight:700;font-family:"JetBrains Mono",monospace;font-size:15px;}
-:root[data-theme="dark"] .sec-lead .num,
-:root:not([data-theme="light"]) .sec-lead .num{color:#10231d;}
-.sec-lead h2{font-family:"Newsreader",serif;font-weight:600;font-size:27px;margin:0;line-height:1.15;}
-h3{font-family:"Newsreader",serif;font-weight:600;font-size:20px;margin:24px 0 8px;}
-h4{font-size:15px;margin:18px 0 6px;color:var(--accent);font-weight:600;}
-p{margin:10px 0;max-width:74ch;}
-ul,ol{max-width:74ch;padding-left:22px;}
-li{margin:5px 0;}
-b,strong{font-weight:600;}
-code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--code-bg);
-  border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--code-ink);}
-pre{background:var(--code-bg);border:1px solid var(--line);border-radius:11px;
-  padding:16px 18px;overflow-x:auto;margin:14px 0;box-shadow:var(--shadow);}
-pre code{background:none;border:0;padding:0;font-size:13.5px;line-height:1.6;color:var(--code-ink);}
-.cmt{color:var(--soft);}
-.kw{color:var(--accent2);font-weight:600;}
-.eq{font-family:"JetBrains Mono",monospace;background:var(--box-bg);border:1px dashed var(--line);
-  border-radius:9px;padding:12px 16px;margin:14px 0;font-size:15px;text-align:center;color:var(--ink);overflow-x:auto;}
-.box{background:var(--box-bg);border:1px solid var(--line);border-left:4px solid var(--soft);
-  border-radius:9px;padding:12px 16px;margin:14px 0;}
-.box.tip{background:var(--tip-bg);border-left-color:var(--accent);border-color:var(--tip-line);}
-.box.out{background:var(--code-bg);border-left-color:var(--accent2);}
-.box p:first-child{margin-top:0;}
-.box p:last-child{margin-bottom:0;}
-.pill{display:inline-block;font-size:11px;letter-spacing:.04em;background:var(--pill);color:var(--accent);
-  border:1px solid var(--tip-line);border-radius:20px;padding:2px 9px;vertical-align:middle;font-weight:600;}
-.tbl-wrap{overflow-x:auto;margin:14px 0;}
-table{border-collapse:collapse;width:100%;font-size:14px;min-width:340px;}
-th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
-th{background:var(--box-bg);font-weight:600;}
-.answer{background:var(--tip-bg);border:1px solid var(--tip-line);border-radius:11px;padding:4px 18px;margin:14px 0;}
-.ok{color:var(--ok);font-weight:600;}
-.no{color:var(--warn);font-weight:600;}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
-.grid2 .box{margin:0;}
-@media (max-width:860px){
-  .shell{grid-template-columns:1fr;}
-  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
-  main{padding:26px 20px 70px;}
-  .hero h1{font-size:30px;}
-  .grid2{grid-template-columns:1fr;}
-}
-</style>
-</head>
-<body>
-<div class="shell">
-<aside>
-  <p class="brand"><a href="#top">SMLR Exam Kit</a><small>ML1 · Session 4 notes</small></p>
-  <div class="tog" role="group" aria-label="Theme">
-    <button data-set="light" aria-pressed="false">Light</button>
-    <button data-set="auto" aria-pressed="true">Auto</button>
-    <button data-set="dark" aria-pressed="false">Dark</button>
-  </div>
-  <nav>
-    <div class="grp">Chapter</div>
-    <a class="active" href="#top"><span class="n">04</span><span>Feature Selection Exam Kit</span></a>
-    <div class="grp">Faculty Notebook</div>
-    <a href="#picture"><span class="n">1</span><span>Big Picture &amp; ML Pipeline</span></a>
-    <a href="#libs"><span class="n">2</span><span>Import Libraries</span></a>
-    <a href="#transform"><span class="n">3</span><span>Feature Transformation</span></a>
-    <a href="#scaling"><span class="n">4</span><span>Feature Scaling</span></a>
-    <a href="#problem"><span class="n">5</span><span>Problem &amp; the Data</span></a>
-    <a href="#prep"><span class="n">6</span><span>Data Preparation</span></a>
-    <a href="#build"><span class="n">7</span><span>Build MLR (before)</span></a>
-    <a href="#after"><span class="n">8</span><span>Model after Transformation</span></a>
-    <a href="#select"><span class="n">9</span><span>Feature Selection Idea</span></a>
-    <a href="#forward"><span class="n">10</span><span>Forward Selection</span></a>
-    <a href="#backward"><span class="n">11</span><span>Backward Elimination</span></a>
-    <a href="#stepwise"><span class="n">12</span><span>Stepwise Regression</span></a>
-    <a href="#rfe"><span class="n">13</span><span>Recursive Feature Elimination</span></a>
-    <div class="grp">Exam</div>
-    <a href="#recipe"><span class="n">★</span><span>Exam-Ready Recipe</span></a>
-    <a href="#quick"><span class="n">≡</span><span>Quick Revision</span></a>
-  </nav>
-</aside>
-
-<main id="top">
 <div class="hero">
   <span class="eyebrow">ML1 · Session 4 · Appliances Energy</span>
   <h1>Feature Engineering &amp; Selection — Exam Kit</h1>
@@ -148,7 +5,7 @@ th{background:var(--box-bg);font-weight:600;}
 </div>
 
 <!-- 1 -->
-<section class="sec" id="picture"><div class="sec-lead"><span class="num">1</span><h2>Big Picture &amp; the ML Pipeline</h2></div>
+<section class="sec" id="picture" data-group="Faculty Notebook" data-badge="1"><div class="sec-lead"><span class="num">1</span><h2>Big Picture &amp; the ML Pipeline</h2></div>
 <div class="box tip"><b>What is a Feature?</b> A <b>feature</b> (or attribute) is an <b>independent variable / input</b> used by the ML model. The <b>columns</b> of a dataset are considered features.<br><b>Example:</b> in house-price prediction, <code>Area</code>, <code>Bedrooms</code> and <code>Location</code> are features; <code>Price</code> is the target.</div>
 <p>Session 3 built a Multiple Linear Regression model. Session 4 is about the two steps that make a model <b>trustworthy and lean</b>:</p>
 <ul>
@@ -167,7 +24,7 @@ th{background:var(--box-bg);font-weight:600;}
 </section>
 
 <!-- 2 -->
-<section class="sec" id="libs"><div class="sec-lead"><span class="num">2</span><h2>Import Libraries</h2></div>
+<section class="sec" id="libs" data-group="Faculty Notebook" data-badge="2"><div class="sec-lead"><span class="num">2</span><h2>Import Libraries</h2></div>
 <pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
 <span class="kw">import</span> numpy <span class="kw">as</span> np
 <span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
@@ -203,7 +60,7 @@ plt.rcParams[<span class="cmt">'figure.figsize'</span>] = [15, 8]</code></pre>
 </section>
 
 <!-- 3 -->
-<section class="sec" id="transform"><div class="sec-lead"><span class="num">3</span><h2>Feature Transformation</h2></div>
+<section class="sec" id="transform" data-group="Faculty Notebook" data-badge="3"><div class="sec-lead"><span class="num">3</span><h2>Feature Transformation</h2></div>
 <p><b>Transformation</b> = replace a variable's values with a <b>function</b> of those values (its log, square root, reciprocal…). We use it for three reasons:</p>
 <ol>
 <li>A variable (predictor <b>or</b> target) is <b>skewed</b> → transform to reduce the skewness.</li>
@@ -269,7 +126,7 @@ sns.histplot(log_tr, kde=<span class="kw">True</span>)   <span class="cmt"># ske
 </section>
 
 <!-- 4 -->
-<section class="sec" id="scaling"><div class="sec-lead"><span class="num">4</span><h2>Feature Scaling</h2></div>
+<section class="sec" id="scaling" data-group="Faculty Notebook" data-badge="4"><div class="sec-lead"><span class="num">4</span><h2>Feature Scaling</h2></div>
 <p><b>Scaling</b> = bring all features onto a <b>common range</b>. Features have wildly different units (age 18–65 vs income in thousands), and many algorithms use <b>distance</b> — so a big-number feature would unfairly dominate a small one.</p>
 <div class="box tip"><b>Analogy:</b> a class has marks out of 100 and attendance out of 30. If you just add them, marks drown out attendance. Scaling puts both "out of the same total" so each gets a <b>fair vote</b>.</div>
 
@@ -293,7 +150,7 @@ sns.histplot(log_tr, kde=<span class="kw">True</span>)   <span class="cmt"># ske
 </section>
 
 <!-- 5 -->
-<section class="sec" id="problem"><div class="sec-lead"><span class="num">5</span><h2>Problem Statement &amp; the Data</h2></div>
+<section class="sec" id="problem" data-group="Faculty Notebook" data-badge="5"><div class="sec-lead"><span class="num">5</span><h2>Problem Statement &amp; the Data</h2></div>
 <p>Sensors in different rooms of a house record temperature, humidity, pressure, wind, etc. <b>Goal: predict the energy used by appliances (in Wh).</b> This is a numeric target → <b>regression</b>.</p>
 <div class="tbl-wrap"><table>
 <tr><th>Column</th><th>Meaning</th></tr>
@@ -308,7 +165,7 @@ sns.histplot(log_tr, kde=<span class="kw">True</span>)   <span class="cmt"># ske
 </section>
 
 <!-- 6 -->
-<section class="sec" id="prep"><div class="sec-lead"><span class="num">6</span><h2>Data Preparation</h2></div>
+<section class="sec" id="prep" data-group="Faculty Notebook" data-badge="6"><div class="sec-lead"><span class="num">6</span><h2>Data Preparation</h2></div>
 
 <h3>6.1 Load &amp; inspect</h3>
 <pre><code>df_energy = pd.read_csv(<span class="cmt">'energy_data.csv'</span>)
@@ -367,7 +224,7 @@ df_features.head()</code></pre>
 </section>
 
 <!-- 7 -->
-<section class="sec" id="build"><div class="sec-lead"><span class="num">7</span><h2>Build the MLR Model (before transformation)</h2></div>
+<section class="sec" id="build" data-group="Faculty Notebook" data-badge="7"><div class="sec-lead"><span class="num">7</span><h2>Build the MLR Model (before transformation)</h2></div>
 <p>For the statsmodels <b>OLS</b> model we add the intercept column and do a train/test split.</p>
 <pre><code><span class="cmt"># add_constant is required ONLY for statsmodels OLS (adds a column of 1s for b0)</span>
 X = sm.add_constant(df_features.copy())
@@ -398,7 +255,7 @@ qqplot(MLR_model.resid, line=<span class="cmt">'s'</span>)               <span c
 </section>
 
 <!-- 8 -->
-<section class="sec" id="after"><div class="sec-lead"><span class="num">8</span><h2>Model Performance after Transformation</h2></div>
+<section class="sec" id="after" data-group="Faculty Notebook" data-badge="8"><div class="sec-lead"><span class="num">8</span><h2>Model Performance after Transformation</h2></div>
 <p>The target <code>Appliances</code> is right-skewed, so we rebuild the model on <code>log(y)</code> — same X, transformed y.</p>
 <pre><code>MLR_model_after_transform = sm.OLS(np.log(y_train), X_train).fit()
 print(MLR_model_after_transform.summary())</code></pre>
@@ -416,7 +273,7 @@ print(np.exp(MLR_model_after_transform.fittedvalues[0:5]))</code></pre>
 </section>
 
 <!-- 9 -->
-<section class="sec" id="select"><div class="sec-lead"><span class="num">9</span><h2>Feature Selection — the Idea</h2></div>
+<section class="sec" id="select" data-group="Faculty Notebook" data-badge="9"><div class="sec-lead"><span class="num">9</span><h2>Feature Selection — the Idea</h2></div>
 <p>Not every one of the ~24 features actually helps predict energy. <b>Feature selection</b> keeps only the <b>significant</b> ones. Benefits: a <b>simpler</b> model, <b>faster</b> to train, easier to explain, and less <b>overfitting</b>.</p>
 <div class="box tip"><b>Analogy:</b> a group project. Some members do real work (significant features), some just sit in the meeting (useless features). Feature selection is politely removing the passengers so the team is lean and effective.</div>
 <p><b>Stepwise regression</b> adds/removes one variable at a time. We study three approaches:</p>
@@ -435,7 +292,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 </section>
 
 <!-- 10 -->
-<section class="sec" id="forward"><div class="sec-lead"><span class="num">10</span><h2>Forward Selection</h2></div>
+<section class="sec" id="forward" data-group="Faculty Notebook" data-badge="10"><div class="sec-lead"><span class="num">10</span><h2>Forward Selection</h2></div>
 <p><b>Procedure:</b> start with a <b>null model</b> (no predictors). Add the feature most correlated with y. Then keep adding, one at a time, the next feature that improves the model the most — until the stopping rule.</p>
 <pre><code>linreg = LinearRegression()
 
@@ -475,7 +332,7 @@ print(<span class="cmt">'SFS  - Test  R²'</span>, lr_fwd.score(X_test[sfs_forwa
 </section>
 
 <!-- 11 -->
-<section class="sec" id="backward"><div class="sec-lead"><span class="num">11</span><h2>Backward Elimination</h2></div>
+<section class="sec" id="backward" data-group="Faculty Notebook" data-badge="11"><div class="sec-lead"><span class="num">11</span><h2>Backward Elimination</h2></div>
 <p><b>Procedure:</b> start with the <b>full</b> model (all features). Remove the <b>least significant</b> one (largest p-value). Refit and repeat until every remaining feature is significant. Same <code>sfs</code> function, just <code>forward=False</code>.</p>
 <pre><code>linreg = LinearRegression()
 
@@ -498,14 +355,14 @@ print(<span class="cmt">'Backward - Test  R²'</span>, lr_bwd.score(X_test[sfs_b
 </section>
 
 <!-- 12 -->
-<section class="sec" id="stepwise"><div class="sec-lead"><span class="num">12</span><h2>Stepwise Regression</h2></div>
+<section class="sec" id="stepwise" data-group="Faculty Notebook" data-badge="12"><div class="sec-lead"><span class="num">12</span><h2>Stepwise Regression</h2></div>
 <p><b>Stepwise regression</b> is the overall <b>iterative feature-selection process</b> that adds or removes a variable at each step based on its p-value, stopping when no variable can be justifiably added or removed. The <b>two approaches</b> studied in this session are <b>Forward Selection</b> and <b>Backward Elimination</b> (§10–11). In short, stepwise <b>combines both</b>: at each step it can <b>add</b> a newly-useful feature <b>or remove</b> one that has become redundant.</p>
 <div class="eq">null model → regress y on each X → add best X<sub>m</sub> → re-test all → add/drop → … → stop</div>
 <div class="box tip"><b>Why bother:</b> a feature that looked useful early can become useless once other features join. Pure forward can't undo an early add; pure backward can't reconsider an early drop. <b>Stepwise gets both powers</b>, so it self-corrects.</div>
 </section>
 
 <!-- 13 -->
-<section class="sec" id="rfe"><div class="sec-lead"><span class="num">13</span><h2>Recursive Feature Elimination (RFE)</h2></div>
+<section class="sec" id="rfe" data-group="Faculty Notebook" data-badge="13"><div class="sec-lead"><span class="num">13</span><h2>Recursive Feature Elimination (RFE)</h2></div>
 <p><b>RFE is an instance of backward elimination.</b> It trains the full model, <b>ranks</b> features by importance, removes the weakest, and repeats until it reaches the number of features you asked for. Selected features get <b>rank = 1</b>.</p>
 <pre><code>lr_rfe = LinearRegression()
 
@@ -528,7 +385,7 @@ print(<span class="cmt">'RFE - Test  R²'</span>, linreg_rfe.score(X_test[rfe_fe
 </section>
 
 <!-- Recipe -->
-<section class="sec" id="recipe"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Recipe (write in this order)</h2></div>
+<section class="sec" id="recipe" data-group="Exam" data-badge="★"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Recipe (write in this order)</h2></div>
 <div class="answer">
 <p><b>Feature Transformation</b> reshapes a variable (log, &#8730;, 1/x, exp, Box-Cox) to fix skew / assumptions. <b>Feature Selection</b> keeps only significant features (forward, backward, stepwise, RFE).</p>
 <p><b>Full workflow:</b></p>
@@ -554,7 +411,7 @@ print(<span class="cmt">'RFE - Test  R²'</span>, linreg_rfe.score(X_test[rfe_fe
 </section>
 
 <!-- Quick -->
-<section class="sec" id="quick"><div class="sec-lead"><span class="num">&#8801;</span><h2>Quick Revision</h2></div>
+<section class="sec" id="quick" data-group="Exam" data-badge="≡"><div class="sec-lead"><span class="num">&#8801;</span><h2>Quick Revision</h2></div>
 <div class="tbl-wrap"><table>
 <tr><th>Term</th><th>One-line meaning</th></tr>
 <tr><td>Feature transformation</td><td>Replace a variable by a function of it (log, &#8730;, 1/x&#8230;).</td></tr>
@@ -581,30 +438,5 @@ print(<span class="cmt">'RFE - Test  R²'</span>, linreg_rfe.score(X_test[rfe_fe
 <tr><td>model.score() (sklearn)</td><td>Returns R&#178;.</td></tr>
 <tr><td>Goal of selection</td><td>Similar test R&#178; with fewer features = win.</td></tr>
 </table></div>
-<p style="color:var(--soft);font-size:13px;margin-top:22px">ML1 &#183; Session 4 &#183; Feature Engineering &amp; Selection &#8212; built from the faculty notebook and slides. Study aid only.</p>
+<p style="color:var(--ink-faint);font-size:13px;margin-top:22px">ML1 &#183; Session 4 &#183; Feature Engineering &amp; Selection &#8212; built from the faculty notebook and slides. Study aid only.</p>
 </section>
-</main>
-</div>
-
-<script>
-(function(){
-  var root=document.documentElement, KEY='smlr-theme';
-  var btns=document.querySelectorAll('.tog button');
-  function apply(mode){
-    if(mode==='auto'){ root.removeAttribute('data-theme'); }
-    else{ root.setAttribute('data-theme', mode); }
-    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.set===mode ? 'true':'false'); });
-  }
-  var saved='auto';
-  try{ saved=localStorage.getItem(KEY)||'auto'; }catch(e){}
-  apply(saved);
-  btns.forEach(function(b){
-    b.addEventListener('click', function(){
-      var m=b.dataset.set; apply(m);
-      try{ localStorage.setItem(KEY, m); }catch(e){}
-    });
-  });
-})();
-</script>
-</body>
-</html>

@@ -107,6 +107,8 @@ pre code.hljs,pre code:not(.hljs){display:block;padding:16px 18px;font-family:"J
 .tk-str{color:#8fd18a}
 .tk-num{color:#e0a56b}
 .tk-fn{color:#6fb3f0}
+.kw{color:#c58cf0;font-weight:600}
+.cmt{color:#8a95ad}
 .codecap{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:20px 0 -8px;}
 
 /* callouts */
@@ -121,9 +123,17 @@ pre code.hljs,pre code:not(.hljs){display:block;padding:16px 18px;font-family:"J
 .info .ic,.info .lbl{color:var(--info-ink);}
 .ana{background:var(--ana-bg);border-color:var(--ana-line);color:var(--ana-ink);}
 .ana .ic,.ana .lbl{color:var(--ana-ink);}
+/* a "result/output" callout — always a dark terminal-like surface, in both site themes */
+.out{background:var(--code-bg);border-color:var(--code-line);color:var(--code-ink);padding-left:16px;}
+.out b,.out strong{color:#fff;}
 .box code:not(.hljs){background:rgba(125,125,125,.14);border-color:transparent;color:inherit;}
-/* a callout with no color variant (no .trap/.tip/.info/.ana) and no .ic icon */
-.box:not(.trap):not(.tip):not(.info):not(.ana){padding-left:16px;background:var(--surface-2);border-color:var(--line);}
+/* a callout with no color variant (no .trap/.tip/.info/.ana/.out) and no .ic icon */
+.box:not(.trap):not(.tip):not(.info):not(.ana):not(.out){padding-left:16px;background:var(--surface-2);border-color:var(--line);}
+
+/* 2-up layout for a pair of side-by-side callouts */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+.grid2 .box{margin:0;}
+@media (max-width:860px){.grid2{grid-template-columns:1fr;}}
 
 .answer{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:var(--shadow);}
 .answer p:first-child{margin-top:0;}
