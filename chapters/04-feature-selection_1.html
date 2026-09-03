@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feature Selection Exam Kit</title>
+<meta name="description" content="Session 4 faculty notebook made simple: feature transformation, scaling, and feature selection (forward, backward, stepwise, RFE) on the Appliances Energy data — every step coded and explained.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f7f5f0; --panel:#ffffff; --ink:#22201c; --soft:#5d5a52; --line:#e4e0d6;
+  --accent:#1a6b5a; --accent2:#b4531f; --code-bg:#faf8f3; --code-ink:#2b2925;
+  --tip-bg:#eef5f2; --tip-line:#bcdccf; --box-bg:#f4f1ea; --pill:#e7efec;
+  --ok:#1a7a4a; --warn:#b4531f; --shadow:0 1px 2px rgba(0,0,0,.05);
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16161a; --panel:#1e1f24; --ink:#eceae4; --soft:#a8a49a; --line:#33343b;
+    --accent:#5fd0b4; --accent2:#e59a5f; --code-bg:#181a1f; --code-ink:#d7d4cc;
+    --tip-bg:#16302a; --tip-line:#2c5346; --box-bg:#23242a; --pill:#22332e;
+    --ok:#5fd0a0; --warn:#e59a5f; --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16161a; --panel:#1e1f24; --ink:#eceae4; --soft:#a8a49a; --line:#33343b;
+  --accent:#5fd0b4; --accent2:#e59a5f; --code-bg:#181a1f; --code-ink:#d7d4cc;
+  --tip-bg:#16302a; --tip-line:#2c5346; --box-bg:#23242a; --pill:#22332e;
+  --ok:#5fd0a0; --warn:#e59a5f; --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.65;}
+.shell{display:grid;grid-template-columns:290px minmax(0,1fr);gap:0;max-width:1220px;margin:0 auto;}
+/* Sidebar */
+aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  border-right:1px solid var(--line);padding:22px 18px;background:var(--panel);}
+.brand{margin:0 0 14px;font-family:"Newsreader",serif;font-size:19px;line-height:1.2;}
+.brand a{color:var(--ink);text-decoration:none;font-weight:600;display:block;}
+.brand small{display:block;color:var(--soft);font-size:12px;font-weight:400;margin-top:3px;
+  font-family:"IBM Plex Sans",sans-serif;}
+.tog{display:flex;gap:4px;margin:0 0 16px;background:var(--box-bg);padding:4px;border-radius:9px;}
+.tog button{flex:1;border:0;background:transparent;color:var(--soft);font:inherit;font-size:12px;
+  padding:5px 4px;border-radius:6px;cursor:pointer;}
+.tog button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow);font-weight:600;}
+nav{font-size:13.5px;}
+.grp{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);
+  margin:16px 0 6px;font-weight:600;}
+nav a{display:flex;gap:9px;align-items:baseline;color:var(--soft);text-decoration:none;
+  padding:4px 8px;border-radius:6px;margin:1px 0;}
+nav a:hover{background:var(--box-bg);color:var(--ink);}
+nav a.active{background:var(--tip-bg);color:var(--accent);font-weight:600;}
+nav a .n{color:var(--accent2);font-weight:600;font-size:12px;min-width:22px;font-family:"JetBrains Mono",monospace;}
+/* Main */
+main{padding:34px 40px 90px;min-width:0;}
+.hero{border-bottom:2px solid var(--line);padding-bottom:22px;margin-bottom:8px;}
+.eyebrow{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent2);font-weight:600;margin-bottom:8px;}
+.hero h1{font-family:"Newsreader",serif;font-weight:600;font-size:38px;line-height:1.1;margin:0 0 12px;}
+.lede{color:var(--soft);font-size:17px;margin:0;max-width:70ch;}
+.sec{padding:30px 0;border-bottom:1px solid var(--line);}
+.sec-lead{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+.sec-lead .num{display:inline-grid;place-items:center;min-width:34px;height:34px;border-radius:9px;
+  background:var(--accent);color:#fff;font-weight:700;font-family:"JetBrains Mono",monospace;font-size:15px;}
+:root[data-theme="dark"] .sec-lead .num,
+:root:not([data-theme="light"]) .sec-lead .num{color:#10231d;}
+.sec-lead h2{font-family:"Newsreader",serif;font-weight:600;font-size:27px;margin:0;line-height:1.15;}
+h3{font-family:"Newsreader",serif;font-weight:600;font-size:20px;margin:24px 0 8px;}
+h4{font-size:15px;margin:18px 0 6px;color:var(--accent);font-weight:600;}
+p{margin:10px 0;max-width:74ch;}
+ul,ol{max-width:74ch;padding-left:22px;}
+li{margin:5px 0;}
+b,strong{font-weight:600;}
+code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--code-bg);
+  border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--code-ink);}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:11px;
+  padding:16px 18px;overflow-x:auto;margin:14px 0;box-shadow:var(--shadow);}
+pre code{background:none;border:0;padding:0;font-size:13.5px;line-height:1.6;color:var(--code-ink);}
+.cmt{color:var(--soft);}
+.kw{color:var(--accent2);font-weight:600;}
+.eq{font-family:"JetBrains Mono",monospace;background:var(--box-bg);border:1px dashed var(--line);
+  border-radius:9px;padding:12px 16px;margin:14px 0;font-size:15px;text-align:center;color:var(--ink);overflow-x:auto;}
+.box{background:var(--box-bg);border:1px solid var(--line);border-left:4px solid var(--soft);
+  border-radius:9px;padding:12px 16px;margin:14px 0;}
+.box.tip{background:var(--tip-bg);border-left-color:var(--accent);border-color:var(--tip-line);}
+.box.out{background:var(--code-bg);border-left-color:var(--accent2);}
+.box p:first-child{margin-top:0;}
+.box p:last-child{margin-bottom:0;}
+.pill{display:inline-block;font-size:11px;letter-spacing:.04em;background:var(--pill);color:var(--accent);
+  border:1px solid var(--tip-line);border-radius:20px;padding:2px 9px;vertical-align:middle;font-weight:600;}
+.tbl-wrap{overflow-x:auto;margin:14px 0;}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:340px;}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+th{background:var(--box-bg);font-weight:600;}
+.answer{background:var(--tip-bg);border:1px solid var(--tip-line);border-radius:11px;padding:4px 18px;margin:14px 0;}
+.ok{color:var(--ok);font-weight:600;}
+.no{color:var(--warn);font-weight:600;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+.grid2 .box{margin:0;}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr;}
+  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:26px 20px 70px;}
+  .hero h1{font-size:30px;}
+  .grid2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside>
+  <p class="brand"><a href="#top">SMLR Exam Kit</a><small>ML1 · Session 4 notes</small></p>
+  <div class="tog" role="group" aria-label="Theme">
+    <button data-set="light" aria-pressed="false">Light</button>
+    <button data-set="auto" aria-pressed="true">Auto</button>
+    <button data-set="dark" aria-pressed="false">Dark</button>
+  </div>
+  <nav>
+    <div class="grp">Chapter</div>
+    <a class="active" href="#top"><span class="n">04</span><span>Feature Selection Exam Kit</span></a>
+    <div class="grp">Faculty Notebook</div>
+    <a href="#picture"><span class="n">1</span><span>Big Picture &amp; ML Pipeline</span></a>
+    <a href="#libs"><span class="n">2</span><span>Import Libraries</span></a>
+    <a href="#transform"><span class="n">3</span><span>Feature Transformation</span></a>
+    <a href="#scaling"><span class="n">4</span><span>Feature Scaling</span></a>
+    <a href="#problem"><span class="n">5</span><span>Problem &amp; the Data</span></a>
+    <a href="#prep"><span class="n">6</span><span>Data Preparation</span></a>
+    <a href="#build"><span class="n">7</span><span>Build MLR (before)</span></a>
+    <a href="#after"><span class="n">8</span><span>Model after Transformation</span></a>
+    <a href="#select"><span class="n">9</span><span>Feature Selection Idea</span></a>
+    <a href="#forward"><span class="n">10</span><span>Forward Selection</span></a>
+    <a href="#backward"><span class="n">11</span><span>Backward Elimination</span></a>
+    <a href="#stepwise"><span class="n">12</span><span>Stepwise Regression</span></a>
+    <a href="#rfe"><span class="n">13</span><span>Recursive Feature Elimination</span></a>
+    <div class="grp">Exam</div>
+    <a href="#recipe"><span class="n">★</span><span>Exam-Ready Recipe</span></a>
+    <a href="#quick"><span class="n">≡</span><span>Quick Revision</span></a>
+  </nav>
+</aside>
+
+<main id="top">
+<div class="hero">
+  <span class="eyebrow">ML1 · Session 4 · Appliances Energy</span>
+  <h1>Feature Engineering &amp; Selection — Exam Kit</h1>
+  <p class="lede">Simple notes built straight from the faculty notebook: <b>transform</b> skewed variables to fix assumptions, <b>scale</b> features to a common range, then <b>select</b> only the features that matter using forward, backward, stepwise and RFE. Every step is coded and explained with examples and analogies.</p>
+</div>
+
+<!-- 1 -->
+<section class="sec" id="picture"><div class="sec-lead"><span class="num">1</span><h2>Big Picture &amp; the ML Pipeline</h2></div>
+<div class="box tip"><b>What is a Feature?</b> A <b>feature</b> (or attribute) is an <b>independent variable / input</b> used by the ML model. The <b>columns</b> of a dataset are considered features.<br><b>Example:</b> in house-price prediction, <code>Area</code>, <code>Bedrooms</code> and <code>Location</code> are features; <code>Price</code> is the target.</div>
+<p>Session 3 built a Multiple Linear Regression model. Session 4 is about the two steps that make a model <b>trustworthy and lean</b>:</p>
+<ul>
+<li><b>Feature Engineering / Transformation</b> — reshape variables so the regression assumptions hold.</li>
+<li><b>Feature Selection</b> — keep only the <b>significant</b> features, drop the dead weight.</li>
+</ul>
+<p>Both live inside <b>Step 2 (Feature Extraction)</b> of the standard ML pipeline:</p>
+<div class="eq">Raw Data → Data Preparation → <b>Feature Extraction &amp; Scaling &amp; Selection</b> → Model Building → Validation &amp; Optimization → Deployment</div>
+<div class="tbl-wrap"><table>
+<tr><th>Term (from slides)</th><th>One-line meaning</th></tr>
+<tr><td><b>Feature Transformation</b></td><td>Replace a feature by a <i>function</i> of it (log, √, 1/x …).</td></tr>
+<tr><td><b>Feature Engineering</b></td><td>Create <i>new</i> features from empirical relationships.</td></tr>
+<tr><td><b>Feature Selection</b></td><td>Fit a model using only the <i>significant</i> features.</td></tr>
+</table></div>
+<div class="box tip"><b>Analogy:</b> think of packing for a trip. <b>Transformation</b> = folding clothes so they fit the suitcase (same clothes, better shape). <b>Selection</b> = leaving behind the things you'll never wear (fewer items, lighter bag).</div>
+</section>
+
+<!-- 2 -->
+<section class="sec" id="libs"><div class="sec-lead"><span class="num">2</span><h2>Import Libraries</h2></div>
+<pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">from</span> scipy <span class="kw">import</span> stats
+
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+
+<span class="cmt"># statsmodels → OLS + full summary + Q-Q plot</span>
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">import</span> statsmodels.stats.api <span class="kw">as</span> sms
+<span class="kw">from</span> statsmodels.api <span class="kw">import</span> qqplot
+
+<span class="cmt"># the three feature-selection tools</span>
+<span class="kw">from</span> mlxtend.feature_selection <span class="kw">import</span> SequentialFeatureSelector <span class="kw">as</span> sfs
+<span class="kw">from</span> sklearn.feature_selection <span class="kw">import</span> RFE
+
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression
+<span class="kw">from</span> sklearn <span class="kw">import</span> metrics
+
+<span class="kw">from</span> warnings <span class="kw">import</span> filterwarnings
+filterwarnings(<span class="cmt">'ignore'</span>)
+pd.options.display.float_format = <span class="cmt">'{:.6f}'</span>.format
+plt.rcParams[<span class="cmt">'figure.figsize'</span>] = [15, 8]</code></pre>
+<p><b>Why each new import (vs Session 3):</b></p>
+<ul>
+<li><code>scipy.stats</code> → gives us <code>stats.boxcox()</code> for the Box-Cox transformation.</li>
+<li><code>SequentialFeatureSelector (sfs)</code> from <b>mlxtend</b> → does <b>forward</b> and <b>backward</b> selection.</li>
+<li><code>RFE</code> from sklearn → does <b>Recursive Feature Elimination</b>.</li>
+<li><code>LinearRegression</code> (sklearn) → used for feature selection. <span class="pill">key</span> It needs <b>no</b> <code>add_constant()</code>; only statsmodels <code>OLS</code> does.</li>
+</ul>
+</section>
+
+<!-- 3 -->
+<section class="sec" id="transform"><div class="sec-lead"><span class="num">3</span><h2>Feature Transformation</h2></div>
+<p><b>Transformation</b> = replace a variable's values with a <b>function</b> of those values (its log, square root, reciprocal…). We use it for three reasons:</p>
+<ol>
+<li>A variable (predictor <b>or</b> target) is <b>skewed</b> → transform to reduce the skewness.</li>
+<li>A linear-regression <b>assumption is violated</b> (e.g. residuals not normal) → transforming the skewed target can fix it.</li>
+<li>The relationship between X and Y is <b>non-linear</b> → transform to <b>straighten</b> it into a line.</li>
+</ol>
+<div class="box tip"><b>Analogy:</b> a transformation is like putting on <b>glasses</b>. The scene (the data) hasn't changed, but through the right lens a blurry, curved pattern suddenly looks straight and clear — which is exactly what linear regression wants.</div>
+
+<h3>3.1 Why linear regression likes "normal-shaped" data</h3>
+<p>The parametric tests inside the model summary (t-tests, F-test, confidence intervals) <b>assume the data is roughly normal</b>. If a variable is badly skewed, those p-values become unreliable. So we nudge skewed variables toward a <b>bell shape</b>.</p>
+
+<h3>3.2 The five transformation methods</h3>
+<div class="tbl-wrap"><table>
+<tr><th>Method</th><th>Formula</th><th>Fixes</th><th>Cannot be used when…</th></tr>
+<tr><td><b>Logarithmic</b></td><td><code>np.log(x)</code></td><td>strong right (positive) skew</td><td>x has <b>0 or negative</b> values (ln(0) undefined)</td></tr>
+<tr><td><b>Square root</b></td><td><code>np.sqrt(x)</code></td><td>mild right skew</td><td>x is <b>negative</b> (0 is OK)</td></tr>
+<tr><td><b>Reciprocal</b></td><td><code>1/x</code></td><td>drastic re-shaping</td><td>x has any <b>0</b> value (negatives are OK)</td></tr>
+<tr><td><b>Exponential</b></td><td><code>np.exp(x)</code></td><td>undoes a log — gets original units back</td><td>—</td></tr>
+<tr><td><b>Box-Cox</b></td><td>(x<sup>λ</sup> − 1)/λ</td><td>auto-picks best power λ</td><td>x is <b>not strictly positive</b></td></tr>
+</table></div>
+
+<h4>a) Log transformation — worked example</h4>
+<p><b>To linearize, replace each value with its natural log.</b> Take this positively-skewed data and apply <code>ln</code>:</p>
+<div class="tbl-wrap"><table>
+<tr><th>X</th><td>12</td><td>9</td><td>3</td><td>6</td><td>24</td><td>13</td><td>21</td><td>54</td><td>46</td><td>87</td></tr>
+<tr><th>ln(X)</th><td>2.5</td><td>2.2</td><td>1.1</td><td>1.8</td><td>3.2</td><td>2.6</td><td>3.1</td><td>3.9</td><td>3.8</td><td>4.5</td></tr>
+</table></div>
+<p>The big values (54, 87) get pulled in hard while small values barely move → the long right tail collapses and the histogram becomes <b>near-normal</b>.</p>
+<pre><code>log_tr = np.log(df1.my_data)
+sns.histplot(log_tr, kde=<span class="kw">True</span>)   <span class="cmt"># skewed → bell shape</span></code></pre>
+<p><b>Why it linearizes:</b> if the true relationship is a curve <code>y = m·x<sup>k</sup>·ε</code>, taking logs of both sides gives a straight line:</p>
+<div class="eq">ln(y) = ln(m) + k·ln(x) + ln(ε)&nbsp;&nbsp;⟶&nbsp;&nbsp;Y = β₀ + β₁·X + ε′</div>
+<div class="box"><b>Watch out:</b> log <b>cannot</b> touch a dummy/categorical column (it contains 0s → ln(0) is undefined), and cannot be used on any variable with zero or negative values.</div>
+
+<h4>b) Square-root transformation</h4>
+<pre><code>sqrt_tr = np.sqrt(df1.my_data)</code></pre>
+<p>A <b>gentler</b> version of the log. Good for <b>mild</b> right-skew, and it <b>can handle zeros</b> (√0 = 0). Same skewed data, <code>√X</code>: 87 → 9.3, 54 → 7.4, 3 → 1.7. The tail shrinks, just not as aggressively as log.</p>
+
+<h4>c) Reciprocal transformation</h4>
+<pre><code>recip_tr = 1 / df1.my_data</code></pre>
+<p>Replaces each value with <code>1/x</code> — a <b>drastic</b> reshape (it flips the order of magnitudes). <b>Cannot be used on 0</b> (divide-by-zero) but <b>negatives are fine</b>. Faculty numeric example:</p>
+<div class="tbl-wrap"><table>
+<tr><th>X</th><td>12</td><td>19</td><td>23</td><td>16</td><td>14</td><td>21</td><td>24</td><td>41</td><td>32</td><td>34</td></tr>
+<tr><th>1/X</th><td>.08</td><td>.05</td><td>.04</td><td>.06</td><td>.07</td><td>.05</td><td>.04</td><td>.02</td><td>.03</td><td>.03</td></tr>
+</table></div>
+<div class="box tip"><b>Everyday example:</b> "people per km²" (population density) becomes "km² per person" — the same information, read the other way round.</div>
+
+<h4>d) Exponential transformation — the "undo" button</h4>
+<pre><code>exp_tr = np.exp(x)</code></pre>
+<p><code>exp</code> is the <b>inverse of log</b>. If you modelled <code>log(y)</code>, your predictions come out in log-units. To report them in real business units (Wh, rupees…), apply <code>np.exp()</code> to the predictions. This is the crucial back-transform we use in §8. Faculty example — apply <code>exp</code> to the <code>ln(X)</code> column and you land back on the original X:</p>
+<div class="tbl-wrap"><table>
+<tr><th>X</th><td>12</td><td>9</td><td>3</td><td>6</td><td>24</td><td>13</td><td>54</td><td>46</td><td>87</td><td>34</td></tr>
+<tr><th>ln(X)</th><td>2.5</td><td>2.2</td><td>1.1</td><td>1.8</td><td>3.2</td><td>2.6</td><td>3.9</td><td>3.8</td><td>4.5</td><td>3.5</td></tr>
+<tr><th>exp(ln X)</th><td>12</td><td>9</td><td>3</td><td>6</td><td>24</td><td>13</td><td>54</td><td>46</td><td>87</td><td>34</td></tr>
+</table></div>
+
+<h4>e) Box-Cox transformation</h4>
+<div class="eq">x<sup>λ</sup> = (x<sup>λ</sup> − 1) / λ &nbsp; if λ ≠ 0 &nbsp;&nbsp;|&nbsp;&nbsp; = ln(x) &nbsp; if λ = 0</div>
+<pre><code>boxcox_tr = stats.boxcox(df1.my_data)[0]   <span class="cmt"># [0] = transformed values</span></code></pre>
+<p>Box-Cox is a <b>generalised log</b>: it tries many powers λ and automatically picks the one that makes the variable most symmetrical. λ &gt; 1 fixes negative skew, λ &lt; 1 fixes positive skew, λ = 0 is exactly the log. <b>Only works on strictly positive data.</b></p>
+
+<div class="box tip"><b>Rule for transformed variables (exam favourite):</b> when comparing model performance, always convert predictions <b>back to the original units</b> first. A model on <code>log(y)</code> must be judged after <code>np.exp()</code>, not in log-units.</div>
+</section>
+
+<!-- 4 -->
+<section class="sec" id="scaling"><div class="sec-lead"><span class="num">4</span><h2>Feature Scaling</h2></div>
+<p><b>Scaling</b> = bring all features onto a <b>common range</b>. Features have wildly different units (age 18–65 vs income in thousands), and many algorithms use <b>distance</b> — so a big-number feature would unfairly dominate a small one.</p>
+<div class="box tip"><b>Analogy:</b> a class has marks out of 100 and attendance out of 30. If you just add them, marks drown out attendance. Scaling puts both "out of the same total" so each gets a <b>fair vote</b>.</div>
+
+<div class="grid2">
+<div class="box"><b>Normalization</b> <span class="pill">Min-Max</span>
+<div class="eq" style="margin:8px 0">x′ = (x − min) / (max − min)</div>
+<p style="margin:6px 0 0">Squeezes every value into <b>0 → 1</b>. Use when you <b>don't know</b> the distribution or it's <b>not</b> a bell curve.</p></div>
+<div class="box"><b>Standardization</b> <span class="pill">Z-score</span>
+<div class="eq" style="margin:8px 0">x′ = (x − mean) / σ</div>
+<p style="margin:6px 0 0">Rescales to <b>mean 0, std 1</b>. Use when data is roughly <b>Gaussian</b>, or when <b>outliers matter</b> and you don't want to lose them.</p></div>
+</div>
+
+<div class="tbl-wrap"><table>
+<tr><th></th><th>Normalization</th><th>Standardization</th></tr>
+<tr><td>Output range</td><td>fixed 0 to 1</td><td>no fixed range (mean 0)</td></tr>
+<tr><td>Distribution needed</td><td>any / unknown / non-Gaussian</td><td>works best if Gaussian</td></tr>
+<tr><td>Outliers</td><td>gets squashed by them</td><td>keeps their impact</td></tr>
+<tr><td>Changes shape?</td><td>can</td><td>no — same shape, just re-centred</td></tr>
+</table></div>
+<p>The notebook uses <b>StandardScaler</b> (standardization) because it keeps outlier information and is unit-free, so features in different units become comparable.</p>
+</section>
+
+<!-- 5 -->
+<section class="sec" id="problem"><div class="sec-lead"><span class="num">5</span><h2>Problem Statement &amp; the Data</h2></div>
+<p>Sensors in different rooms of a house record temperature, humidity, pressure, wind, etc. <b>Goal: predict the energy used by appliances (in Wh).</b> This is a numeric target → <b>regression</b>.</p>
+<div class="tbl-wrap"><table>
+<tr><th>Column</th><th>Meaning</th></tr>
+<tr><td><b>Appliances</b></td><td>Energy use in Wh — <b>the target (y)</b>.</td></tr>
+<tr><td>lights</td><td>Energy use of light fixtures (Wh).</td></tr>
+<tr><td>T1 … T9</td><td>Temperature in kitchen, living, laundry, office, bath, ironing, teen &amp; parents rooms (°C).</td></tr>
+<tr><td>RH_1 … RH_9</td><td>Humidity (%) in those same rooms.</td></tr>
+<tr><td>T_out, RH_out</td><td>Outside temperature (°C) &amp; humidity (%).</td></tr>
+<tr><td>Press_mm_hg</td><td>Pressure in mm Hg.</td></tr>
+<tr><td>Windspeed, Visibility</td><td>Wind speed (m/s) &amp; visibility (km).</td></tr>
+</table></div>
+</section>
+
+<!-- 6 -->
+<section class="sec" id="prep"><div class="sec-lead"><span class="num">6</span><h2>Data Preparation</h2></div>
+
+<h3>6.1 Load &amp; inspect</h3>
+<pre><code>df_energy = pd.read_csv(<span class="cmt">'energy_data.csv'</span>)
+df_energy.head()      <span class="cmt"># first 5 rows</span>
+df_energy.shape       <span class="cmt"># (rows, columns)</span>
+df_energy.info()      <span class="cmt"># dtypes + non-null counts</span></code></pre>
+
+<h3>6.2 Missing values</h3>
+<pre><code>Total   = df_energy.isnull().sum().sort_values(ascending=<span class="kw">False</span>)
+Percent = (df_energy.isnull().sum()*100 / df_energy.isnull().count())
+missing_data = pd.concat([Total, Percent], axis=1,
+               keys=[<span class="cmt">'Total'</span>, <span class="cmt">'Percentage of Missing Values'</span>])
+missing_data</code></pre>
+<div class="box out"><b>Result:</b> there are <b>no missing values</b> in this dataset → nothing to fill or drop.</div>
+
+<h3>6.3 Outliers <span class="pill">IQR method</span></h3>
+<p><b>Outliers</b> = extreme values that drag the regression line and break assumptions. Step 1 — <b>see</b> them with boxplots.</p>
+<pre><code>df_energy.boxplot()   <span class="cmt"># all variables at once</span>
+
+<span class="cmt"># 'Appliances' &amp; 'Press_mm_hg' have huge ranges and flatten every other box,</span>
+<span class="cmt"># so plot the rest without them using iloc[] column positions:</span>
+df_energy.iloc[:, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22,23,24]].boxplot()
+
+sns.boxplot(df_energy[<span class="cmt">'Press_mm_hg'</span>])   <span class="cmt"># view pressure on its own</span></code></pre>
+<p>Step 2 — <b>remove</b> them with the IQR rule:</p>
+<pre><code>Q1  = df_energy.quantile(0.25)
+Q3  = df_energy.quantile(0.75)
+IQR = Q3 - Q1
+
+lower = Q1 - 1.5*IQR
+upper = Q3 + 1.5*IQR
+
+outliers  = ((df_energy &lt; lower) | (df_energy &gt; upper)).any(axis=1)
+df_energy = df_energy.loc[~outliers]   <span class="cmt"># ~ keeps the clean rows</span>
+df_energy.shape</code></pre>
+<ul>
+<li><b>IQR = Q3 − Q1</b> = the spread of the middle 50% of the data.</li>
+<li>Anything below <b>Q1 − 1.5·IQR</b> or above <b>Q3 + 1.5·IQR</b> is flagged as an outlier.</li>
+<li><code>.any(axis=1)</code> flags a <b>row</b> if <b>any</b> column in it is an outlier; <code>~</code> then keeps the rest.</li>
+</ul>
+
+<h3>6.4 Drop variables with (near) zero standard deviation</h3>
+<pre><code>df_energy.std()                    <span class="cmt"># check spread of every column</span>
+df_energy[<span class="cmt">'lights'</span>].value_counts()  <span class="cmt"># confirm it's basically constant</span>
+df_energy = df_energy.drop(<span class="cmt">'lights'</span>, axis=1)</code></pre>
+<div class="box tip"><b>Why:</b> after outlier removal, <code>lights</code> has <b>standard deviation ≈ 0</b> — it's the same value in every row. A constant column carries <b>no information</b>, so it can't help prediction → drop it. This is itself a tiny piece of <b>feature selection</b> (a "zero-variance filter").</div>
+
+<h3>6.5 Split X / y and scale</h3>
+<pre><code>df_features = df_energy.drop(<span class="cmt">'Appliances'</span>, axis=1)   <span class="cmt"># X</span>
+
+scaler = StandardScaler()
+<span class="cmt"># keep the LEFT side as df_features[cols] so the output stays a DataFrame</span>
+df_features[df_features.columns] = scaler.fit_transform(df_features)
+df_features.head()</code></pre>
+<div class="box"><b>Small but important trick:</b> writing <code>df_features[df_features.columns] = ...</code> keeps the result a <b>DataFrame</b> (with column names). Writing just <code>df_features = scaler.fit_transform(...)</code> would give a bare NumPy <b>array</b> and you'd lose the names.</div>
+</section>
+
+<!-- 7 -->
+<section class="sec" id="build"><div class="sec-lead"><span class="num">7</span><h2>Build the MLR Model (before transformation)</h2></div>
+<p>For the statsmodels <b>OLS</b> model we add the intercept column and do a train/test split.</p>
+<pre><code><span class="cmt"># add_constant is required ONLY for statsmodels OLS (adds a column of 1s for b0)</span>
+X = sm.add_constant(df_features.copy())
+y = df_energy[<span class="cmt">'Appliances'</span>]
+
+X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=1, test_size=0.2)
+
+MLR_model = sm.OLS(y_train, X_train).fit()
+print(MLR_model.summary())</code></pre>
+
+<h3>7.1 Check autocorrelation <span class="pill">Durbin-Watson</span></h3>
+<p>Read the <b>Durbin-Watson</b> value straight from the summary.</p>
+<div class="tbl-wrap"><table>
+<tr><th>DW value</th><th>Meaning</th></tr>
+<tr><td>0 – 2</td><td>Positive autocorrelation</td></tr>
+<tr><td><b>≈ 2</b></td><td><b>No autocorrelation (good)</b> ✅</td></tr>
+<tr><td>2 – 4</td><td>Negative autocorrelation</td></tr>
+</table></div>
+<div class="box out"><b>Result:</b> DW is close to <b>2</b> → no autocorrelation, assumption satisfied.</div>
+
+<h3>7.2 Check normality of residuals</h3>
+<pre><code>sns.histplot(MLR_model.resid, kde=<span class="kw">True</span>)          <span class="cmt"># want a bell shape</span>
+print(<span class="cmt">"Skewness:"</span>, MLR_model.resid.skew())      <span class="cmt"># want ≈ 0</span>
+
+qqplot(MLR_model.resid, line=<span class="cmt">'s'</span>)               <span class="cmt"># want points on the 45° line</span></code></pre>
+<div class="box out"><b>Result:</b> the residuals are <b>right-skewed</b> and the Q-Q points bend away from the line → <b>not normally distributed</b> ❌. The normality assumption <b>fails</b>. This is exactly the problem transformation is built to fix.</div>
+</section>
+
+<!-- 8 -->
+<section class="sec" id="after"><div class="sec-lead"><span class="num">8</span><h2>Model Performance after Transformation</h2></div>
+<p>The target <code>Appliances</code> is right-skewed, so we rebuild the model on <code>log(y)</code> — same X, transformed y.</p>
+<pre><code>MLR_model_after_transform = sm.OLS(np.log(y_train), X_train).fit()
+print(MLR_model_after_transform.summary())</code></pre>
+<div class="box out"><b>Result:</b> R² barely moves (0.352 → 0.353) and Adj R² (0.315 → 0.317) — <b>but</b> the residuals are now <b>near-normal</b>: the histogram is a clean bell and the Q-Q points sit on the line. <b>The broken assumption is now satisfied.</b></div>
+<div class="box tip"><b>Exam takeaway:</b> transformation's job here is <b>not</b> to boost R². Its job is to <b>fix a violated assumption</b> (normal residuals). A model with valid assumptions is trustworthy even if R² is unchanged.</div>
+
+<h3>8.1 Getting real predictions back <span class="pill">must-know</span></h3>
+<p>Because we trained on <code>log(y)</code>, the model <b>predicts log-values</b>. To use them for business, undo the log with <code>np.exp()</code>:</p>
+<pre><code><span class="cmt"># raw model → predictions already in Wh</span>
+print(MLR_model.fittedvalues[0:5])
+
+<span class="cmt"># log model → predictions are in log-units → apply np.exp to get Wh back</span>
+print(np.exp(MLR_model_after_transform.fittedvalues[0:5]))</code></pre>
+<div class="box"><b>Analogy:</b> log is the "shrink-to-fit" button and <code>np.exp</code> is the "restore" button. You do all the modelling in the shrunk world, then press restore before showing anyone the answer.</div>
+</section>
+
+<!-- 9 -->
+<section class="sec" id="select"><div class="sec-lead"><span class="num">9</span><h2>Feature Selection — the Idea</h2></div>
+<p>Not every one of the ~24 features actually helps predict energy. <b>Feature selection</b> keeps only the <b>significant</b> ones. Benefits: a <b>simpler</b> model, <b>faster</b> to train, easier to explain, and less <b>overfitting</b>.</p>
+<div class="box tip"><b>Analogy:</b> a group project. Some members do real work (significant features), some just sit in the meeting (useless features). Feature selection is politely removing the passengers so the team is lean and effective.</div>
+<p><b>Stepwise regression</b> adds/removes one variable at a time. We study three approaches:</p>
+<div class="tbl-wrap"><table>
+<tr><th>Method</th><th>Starts with…</th><th>Each step…</th><th>Driven by</th></tr>
+<tr><td><b>Forward selection</b></td><td>empty model</td><td><b>adds</b> the most useful feature</td><td>highest correlation / R²</td></tr>
+<tr><td><b>Backward elimination</b></td><td>all features</td><td><b>drops</b> the weakest feature</td><td>highest p-value</td></tr>
+<tr><td><b>Stepwise</b></td><td>empty model</td><td>can <b>add or drop</b></td><td>p-value both ways</td></tr>
+<tr><td><b>RFE</b></td><td>all features</td><td>drops lowest-<b>ranked</b> feature</td><td>model importance</td></tr>
+</table></div>
+<pre><code><span class="cmt"># sklearn LinearRegression is used for selection → do NOT add a constant</span>
+X = df_features
+y = df_energy[<span class="cmt">'Appliances'</span>]
+X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.20, random_state=10)</code></pre>
+</section>
+
+<!-- 10 -->
+<section class="sec" id="forward"><div class="sec-lead"><span class="num">10</span><h2>Forward Selection</h2></div>
+<p><b>Procedure:</b> start with a <b>null model</b> (no predictors). Add the feature most correlated with y. Then keep adding, one at a time, the next feature that improves the model the most — until the stopping rule.</p>
+<pre><code>linreg = LinearRegression()
+
+linreg_forward = sfs(estimator=linreg,
+                     k_features=6,        <span class="cmt"># stop at 6 features</span>
+                     forward=<span class="kw">True</span>,       <span class="cmt"># True = forward selection</span>
+                     verbose=2,           <span class="cmt"># print R² at each step</span>
+                     scoring=<span class="cmt">'r2'</span>)       <span class="cmt"># pick features by R²</span>
+
+sfs_forward = linreg_forward.fit(X_train, y_train)
+
+print(sfs_forward.k_feature_names_)   <span class="cmt"># the chosen features</span>
+print(sfs_forward.k_score_)           <span class="cmt"># their R²</span></code></pre>
+<p><b>Three ways to tell it when to stop</b> (<code>k_features=</code>):</p>
+<div class="tbl-wrap"><table>
+<tr><th><code>k_features</code></th><th>Meaning</th></tr>
+<tr><td><code>6</code></td><td>Give me exactly the best <b>6</b> features.</td></tr>
+<tr><td><code>(3, 8)</code></td><td>Try every subset size from <b>3 to 8</b>; keep whichever scored highest in cross-validation.</td></tr>
+<tr><td><code>'best'</code></td><td>Search <b>all</b> subset sizes and return the single best subset.</td></tr>
+</table></div>
+<pre><code><span class="cmt"># range version</span>
+sfs(estimator=linreg, k_features=(3,8), forward=<span class="kw">True</span>, verbose=2, scoring=<span class="cmt">'r2'</span>)
+<span class="cmt"># best version</span>
+sfs(estimator=linreg, k_features=<span class="cmt">'best'</span>, forward=<span class="kw">True</span>, verbose=2, scoring=<span class="cmt">'r2'</span>)</code></pre>
+
+<h3>10.1 Full model vs forward-selected model</h3>
+<pre><code><span class="cmt"># NOTE: in sklearn, model.score() returns R²</span>
+lr_full = LinearRegression().fit(X_train, y_train)
+print(<span class="cmt">'Full - Train R²'</span>, lr_full.score(X_train, y_train))
+print(<span class="cmt">'Full - Test  R²'</span>, lr_full.score(X_test,  y_test))
+
+sfs_forward_list = [<span class="cmt">'T1'</span>,<span class="cmt">'RH_1'</span>,<span class="cmt">'T2'</span>,<span class="cmt">'RH_2'</span>,<span class="cmt">'T4'</span>,<span class="cmt">'T6'</span>,<span class="cmt">'RH_6'</span>,<span class="cmt">'T7'</span>,<span class="cmt">'T8'</span>,<span class="cmt">'RH_8'</span>,<span class="cmt">'T9'</span>,<span class="cmt">'Windspeed'</span>]
+lr_fwd = LinearRegression().fit(X_train[sfs_forward_list], y_train)
+print(<span class="cmt">'SFS  - Train R²'</span>, lr_fwd.score(X_train[sfs_forward_list], y_train))
+print(<span class="cmt">'SFS  - Test  R²'</span>, lr_fwd.score(X_test[sfs_forward_list],  y_test))</code></pre>
+<div class="box tip"><b>What to look for:</b> the forward model uses <b>far fewer</b> features yet its test R² is <b>almost the same</b> as the full model. Same accuracy, simpler model → that's the win.</div>
+</section>
+
+<!-- 11 -->
+<section class="sec" id="backward"><div class="sec-lead"><span class="num">11</span><h2>Backward Elimination</h2></div>
+<p><b>Procedure:</b> start with the <b>full</b> model (all features). Remove the <b>least significant</b> one (largest p-value). Refit and repeat until every remaining feature is significant. Same <code>sfs</code> function, just <code>forward=False</code>.</p>
+<pre><code>linreg = LinearRegression()
+
+linreg_backward = sfs(estimator=linreg,
+                      k_features=18,
+                      forward=<span class="kw">False</span>,      <span class="cmt"># False = BACKWARD elimination</span>
+                      verbose=2,
+                      scoring=<span class="cmt">'r2'</span>)
+
+sfs_backward = linreg_backward.fit(X_train, y_train)
+print(sfs_backward.k_feature_names_)
+print(sfs_backward.k_score_)</code></pre>
+<p>The same <code>k_features</code> options apply — a number, a range <code>(15, 20)</code>, or <code>'best'</code>.</p>
+<h3>11.1 Check the backward model</h3>
+<pre><code>sfs_backward_list = [<span class="cmt">'T1'</span>,<span class="cmt">'RH_1'</span>,<span class="cmt">'T2'</span>,<span class="cmt">'RH_2'</span>,<span class="cmt">'T4'</span>,<span class="cmt">'T7'</span>,<span class="cmt">'T8'</span>,<span class="cmt">'RH_8'</span>,<span class="cmt">'T9'</span>,<span class="cmt">'T_out'</span>,<span class="cmt">'RH_out'</span>,<span class="cmt">'Windspeed'</span>]
+lr_bwd = LinearRegression().fit(X_train[sfs_backward_list], y_train)
+print(<span class="cmt">'Backward - Train R²'</span>, lr_bwd.score(X_train[sfs_backward_list], y_train))
+print(<span class="cmt">'Backward - Test  R²'</span>, lr_bwd.score(X_test[sfs_backward_list],  y_test))</code></pre>
+<div class="box"><b>Forward vs Backward:</b> forward starts empty and <b>builds up</b> by correlation/R²; backward starts full and <b>tears down</b> by p-value. They can end on slightly different feature lists (notice T6/RH_6 in forward vs T_out/RH_out in backward) — both are valid.</div>
+</section>
+
+<!-- 12 -->
+<section class="sec" id="stepwise"><div class="sec-lead"><span class="num">12</span><h2>Stepwise Regression</h2></div>
+<p><b>Stepwise regression</b> is the overall <b>iterative feature-selection process</b> that adds or removes a variable at each step based on its p-value, stopping when no variable can be justifiably added or removed. The <b>two approaches</b> studied in this session are <b>Forward Selection</b> and <b>Backward Elimination</b> (§10–11). In short, stepwise <b>combines both</b>: at each step it can <b>add</b> a newly-useful feature <b>or remove</b> one that has become redundant.</p>
+<div class="eq">null model → regress y on each X → add best X<sub>m</sub> → re-test all → add/drop → … → stop</div>
+<div class="box tip"><b>Why bother:</b> a feature that looked useful early can become useless once other features join. Pure forward can't undo an early add; pure backward can't reconsider an early drop. <b>Stepwise gets both powers</b>, so it self-corrects.</div>
+</section>
+
+<!-- 13 -->
+<section class="sec" id="rfe"><div class="sec-lead"><span class="num">13</span><h2>Recursive Feature Elimination (RFE)</h2></div>
+<p><b>RFE is an instance of backward elimination.</b> It trains the full model, <b>ranks</b> features by importance, removes the weakest, and repeats until it reaches the number of features you asked for. Selected features get <b>rank = 1</b>.</p>
+<pre><code>lr_rfe = LinearRegression()
+
+rfe_model = RFE(estimator=lr_rfe, n_features_to_select=12)
+rfe_model = rfe_model.fit(X_train, y_train)
+
+rfe_model.ranking_   <span class="cmt"># rank per feature; rank 1 = KEEP</span></code></pre>
+<p>Turn the ranks into a clean feature list:</p>
+<pre><code>rfe_rank = pd.DataFrame()
+rfe_rank[<span class="cmt">'features'</span>] = X_train.columns
+rfe_rank[<span class="cmt">'rank'</span>]     = rfe_model.ranking_
+
+rfe_feature_list = list(rfe_rank[rfe_rank[<span class="cmt">'rank'</span>] == 1][<span class="cmt">'features'</span>])
+print(rfe_feature_list)</code></pre>
+<h3>13.1 Check the RFE model</h3>
+<pre><code>linreg_rfe = LinearRegression().fit(X_train[rfe_feature_list], y_train)
+print(<span class="cmt">'RFE - Train R²'</span>, linreg_rfe.score(X_train[rfe_feature_list], y_train))
+print(<span class="cmt">'RFE - Test  R²'</span>, linreg_rfe.score(X_test[rfe_feature_list],  y_test))</code></pre>
+<div class="box"><b>RFE vs plain backward:</b> plain backward drops by <b>p-value</b>; RFE drops by the model's own <b>importance ranking</b> and needs you to <b>fix the target number</b> of features up front (<code>n_features_to_select</code>). If you don't set it, RFE keeps <b>half</b> the features by default.</div>
+</section>
+
+<!-- Recipe -->
+<section class="sec" id="recipe"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Recipe (write in this order)</h2></div>
+<div class="answer">
+<p><b>Feature Transformation</b> reshapes a variable (log, &#8730;, 1/x, exp, Box-Cox) to fix skew / assumptions. <b>Feature Selection</b> keeps only significant features (forward, backward, stepwise, RFE).</p>
+<p><b>Full workflow:</b></p>
+<ol>
+<li>Read data; check <code>head, shape, info</code>.</li>
+<li>Handle <b>missing values</b> (here: none).</li>
+<li>Treat <b>outliers</b> (boxplot + IQR: below Q1&#8722;1.5&#183;IQR or above Q3+1.5&#183;IQR).</li>
+<li>Drop <b>zero-variance</b> columns (std &#8776; 0 &#8594; e.g. <code>lights</code>).</li>
+<li><b>Scale</b> numeric features with StandardScaler (mean 0, std 1).</li>
+<li><b>OLS path:</b> <code>sm.add_constant()</code> &#8594; train/test split &#8594; <code>sm.OLS(y, X).fit()</code>.</li>
+<li>Check assumptions: Durbin-Watson &#8776; 2 (no autocorrelation), residual normality (hist + Q-Q). <b>If residuals not normal &#8594; transform the target.</b></li>
+<li><b>Transform:</b> rebuild on <code>np.log(y)</code>; residuals become near-normal. Predict, then <code>np.exp()</code> to return to real units.</li>
+<li><b>Feature selection</b> (sklearn LinearRegression, <b>no</b> add_constant):
+   <ul>
+   <li>Forward: <code>sfs(..., forward=True)</code>.</li>
+   <li>Backward: <code>sfs(..., forward=False)</code>.</li>
+   <li>RFE: <code>RFE(estimator, n_features_to_select)</code>, keep rank == 1.</li>
+   </ul></li>
+<li>Compare full vs selected models by <b>Train / Test R&#178;</b>: fewer features with similar test R&#178; = better.</li>
+</ol>
+</div>
+<div class="box tip"><b>Two facts examiners love:</b> (1) <code>add_constant()</code> is for <b>statsmodels OLS only</b>, never for sklearn LinearRegression. (2) Judge a transformed model in the <b>original units</b> (apply <code>np.exp</code> first).</div>
+</section>
+
+<!-- Quick -->
+<section class="sec" id="quick"><div class="sec-lead"><span class="num">&#8801;</span><h2>Quick Revision</h2></div>
+<div class="tbl-wrap"><table>
+<tr><th>Term</th><th>One-line meaning</th></tr>
+<tr><td>Feature transformation</td><td>Replace a variable by a function of it (log, &#8730;, 1/x&#8230;).</td></tr>
+<tr><td>Feature engineering</td><td>Create new features from relationships.</td></tr>
+<tr><td>Feature selection</td><td>Keep only significant features.</td></tr>
+<tr><td>Log transform</td><td><code>np.log(x)</code>; fixes strong right skew; no 0/negatives.</td></tr>
+<tr><td>Square-root transform</td><td><code>np.sqrt(x)</code>; mild skew; allows 0.</td></tr>
+<tr><td>Reciprocal transform</td><td><code>1/x</code>; drastic reshape; no zeros (negatives OK).</td></tr>
+<tr><td>Exponential transform</td><td><code>np.exp(x)</code>; undoes a log (back to real units).</td></tr>
+<tr><td>Box-Cox</td><td>(x<sup>&#955;</sup>&#8722;1)/&#955;; generalised log; positive data only.</td></tr>
+<tr><td>Normalization (Min-Max)</td><td>(x&#8722;min)/(max&#8722;min) &#8594; range 0&#8211;1.</td></tr>
+<tr><td>Standardization (Z-score)</td><td>(x&#8722;mean)/&#963; &#8594; mean 0, std 1. Keeps outliers.</td></tr>
+<tr><td>IQR outlier</td><td>&lt; Q1&#8722;1.5&#183;IQR or &gt; Q3+1.5&#183;IQR.</td></tr>
+<tr><td>Zero-variance column</td><td>std &#8776; 0 &#8594; no info &#8594; drop (e.g. <code>lights</code>).</td></tr>
+<tr><td>add_constant()</td><td>Intercept column &#8212; statsmodels OLS only.</td></tr>
+<tr><td>Durbin-Watson &#8776; 2</td><td>No autocorrelation (good).</td></tr>
+<tr><td>Non-normal residuals</td><td>Transform the target (log) to fix it.</td></tr>
+<tr><td>Forward selection</td><td>Start empty; add best feature each step.</td></tr>
+<tr><td>Backward elimination</td><td>Start full; drop highest-p feature each step.</td></tr>
+<tr><td>Stepwise</td><td>Forward + backward: can add OR drop each step.</td></tr>
+<tr><td>RFE</td><td>Backward by importance rank; keep rank == 1.</td></tr>
+<tr><td>sfs forward/backward</td><td><code>forward=True</code> / <code>forward=False</code>.</td></tr>
+<tr><td>k_features</td><td>int, range <code>(n1,n2)</code>, or <code>'best'</code>.</td></tr>
+<tr><td>model.score() (sklearn)</td><td>Returns R&#178;.</td></tr>
+<tr><td>Goal of selection</td><td>Similar test R&#178; with fewer features = win.</td></tr>
+</table></div>
+<p style="color:var(--soft);font-size:13px;margin-top:22px">ML1 &#183; Session 4 &#183; Feature Engineering &amp; Selection &#8212; built from the faculty notebook and slides. Study aid only.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, KEY='smlr-theme';
+  var btns=document.querySelectorAll('.tog button');
+  function apply(mode){
+    if(mode==='auto'){ root.removeAttribute('data-theme'); }
+    else{ root.setAttribute('data-theme', mode); }
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.set===mode ? 'true':'false'); });
+  }
+  var saved='auto';
+  try{ saved=localStorage.getItem(KEY)||'auto'; }catch(e){}
+  apply(saved);
+  btns.forEach(function(b){
+    b.addEventListener('click', function(){
+      var m=b.dataset.set; apply(m);
+      try{ localStorage.setItem(KEY, m); }catch(e){}
+    });
+  });
+})();
+</script>
+</body>
+</html>
