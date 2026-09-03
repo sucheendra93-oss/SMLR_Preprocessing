@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preprocessing Exam Kit</title>
+<meta name="description" content="Every line of the Session 1 notebook, explained mechanically and mapped to the SMLR model paper.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="shell">
+<aside>
+  <p class="brand"><a href="../index.html">SMLR Exam Kit</a><small>ML1 · Session notes</small></p>
+  <div class="tog" role="group" aria-label="Theme">
+    <button data-set="light" aria-pressed="false">Light</button>
+    <button data-set="auto" aria-pressed="true">Auto</button>
+    <button data-set="dark" aria-pressed="false">Dark</button>
+  </div>
+  <nav>
+    <div class="grp">Chapters</div>
+    <a class="active" href="01-preprocessing.html"><span class="n">01</span><span>Preprocessing Exam Kit</span></a>
+    <div class="grp">In this chapter</div>
+    <div class="grp">Read first</div>
+    <a href="#map"><span class="n">★</span><span>How this maps to your exam</span></a>
+    <a href="#setup"><span class="n">0</span><span>Setup &amp; load the data</span></a>
+    <div class="grp">The pipeline</div>
+    <a href="#summary"><span class="n">1</span><span>Data summary (EDA first look)</span></a>
+    <a href="#missing"><span class="n">2</span><span>Missing values</span></a>
+    <a href="#encode"><span class="n">3</span><span>Encoding categorical variables</span></a>
+    <a href="#scale"><span class="n">4</span><span>Scaling / normalisation</span></a>
+    <a href="#transform"><span class="n">5</span><span>Transformations</span></a>
+    <a href="#outliers"><span class="n">6</span><span>Outliers — 4 detection methods</span></a>
+    <a href="#feature"><span class="n">7</span><span>Feature engineering</span></a>
+    <a href="#split"><span class="n">8</span><span>Train / test split</span></a>
+    <div class="grp">Your work</div>
+    <a href="#yours"><span class="n">◆</span><span>Your version — reviewed &amp; tightened</span></a>
+    <div class="grp">Exam</div>
+    <a href="#practice"><span class="n">✎</span><span>Practice — worked from your actual QP</span></a>
+    <a href="#gaps"><span class="n">!</span><span>What your exam tests that's NOT in Session 1</span></a>
+    <a href="#cheat"><span class="n">≡</span><span>Quick cheat sheet</span></a>
+  </nav>
+</aside>
+
+<main>
+  <div class="hero">
+    <span class="eyebrow">Data Preprocessing · BigMart Sales</span>
+    <h1>Everything in Session 1, and what it earns you in the exam</h1>
+    <p class="lede">Every line of code from the Session 1 notebook, explained mechanically — what it does, why you'd choose it, and the traps examiners set — then mapped against your actual SMLR model paper.</p>
+    <div class="metarow">
+      <span class="chip"><b>8</b> pipeline stages</span>
+      <span class="chip"><b>6</b> encoding methods</span>
+      <span class="chip"><b>3</b> outlier methods</span>
+      <span class="chip">dataset: <b>bigmartsales</b></span>
+      <span class="chip">target: <b>Item_Outlet_Sales</b></span>
+    </div>
+  </div>
+
+  <!-- ============ MAP ============ -->
+  <section class="sec" id="map" data-group="Read first" data-badge="★">
+    <div class="sec-lead"><span class="num">★</span><h2>How this maps to your exam</h2></div>
+    <p>Your model QP (SMLR ESA) covers the <strong>whole course</strong>, not just preprocessing. Here's the honest breakdown of what this Session 1 material actually answers, so you don't waste revision time.</p>
+    <div class="tbl-wrap map">
+      <table>
+        <thead><tr><th>QP question</th><th>Topic</th><th>Session 1 covers it?</th></tr></thead>
+        <tbody>
+          <tr><td>1a</td><td>Handle missing values — methods, examples, pros/cons</td><td><span class="cover c-full">FULLY</span> — see §2</td></tr>
+          <tr><td>1b</td><td>Feature scaling — why, methods, effect on algorithms</td><td><span class="cover c-full">FULLY</span> — see §4</td></tr>
+          <tr><td>1c</td><td>Bias–variance, under/overfitting</td><td><span class="cover c-none">NO</span> — other session</td></tr>
+          <tr><td>1d</td><td>Hyperparameters vs parameters, tuning</td><td><span class="cover c-none">NO</span> — other session</td></tr>
+          <tr><td>1e</td><td>Feature selection (FFS, BE, RFE)</td><td><span class="cover c-none">NO</span> — other session</td></tr>
+          <tr><td>2 (real-estate)</td><td>Inspect, missing/non-standard, encode, X/y, split, correlation, outliers, EDA</td><td><span class="cover c-full">FULLY</span> — this is a Session 1 exam in disguise</td></tr>
+          <tr><td>2b–2d (later)</td><td>MLR, MAE/RMSE/R², Ridge/Lasso, RFE</td><td><span class="cover c-part">PARTLY</span> — split only (§8)</td></tr>
+          <tr><td>2e</td><td>Cross-validation Python code</td><td><span class="cover c-none">NO</span> — other session</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Highest-yield insight</b>Question <strong>2 (10 marks, "real-estate")</strong> is answerable end-to-end from this one notebook, and <strong>1a + 1b (20 marks)</strong> are pure Session 1. That's up to <strong>30 marks</strong> riding on the material below. The worked answers are in <a class="inl" href="#practice">Practice</a>.</p></div>
+  </section>
+
+  <!-- ============ 0 SETUP ============ -->
+  <section class="sec" id="setup" data-group="Read first" data-badge="0">
+    <div class="sec-lead"><span class="num">0</span><h2>Setup &amp; load the data</h2></div>
+    <p>The imports and the read. Nothing tricky, but examiners expect you to reproduce this from memory before any "write code" question.</p>
+    <pre><code class="language-python">import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+pd.options.display.max_columns = None      # show ALL columns, never truncate with "..."
+plt.rcParams["figure.figsize"] = [15, 5]   # default plot size for the session
+
+df_sales = pd.read_csv("bigmartsales-cleaned.csv")
+df_sales.head()                            # first 5 rows — sanity-check the load</code></pre>
+    <p><strong>Mechanically:</strong> <code>pd</code> for tables, <code>np</code> for <code>np.nan</code> / numeric ops, <code>sns</code>+<code>plt</code> for plots. <code>read_csv</code> returns a DataFrame; <code>.head()</code> shows the top 5 rows so you confirm columns loaded correctly.</p>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Remember the four aliases</b>A "write code" answer that starts with the four imports and a <code>read_csv</code> reads as fluent. Missing them reads as guessing.</div>
+  </section>
+
+  <!-- ============ 1 SUMMARY ============ -->
+  <section class="sec" id="summary" data-group="The pipeline" data-badge="1">
+    <div class="sec-lead"><span class="num">1</span><h2>Data summary (EDA first look)</h2></div>
+    <p>Before touching anything, you describe the data: shape, dtypes, distributions, category counts. This is exactly what QP 2a ("inspect the dataset") and 2e ("observations from EDA") are testing.</p>
+
+    <pre><code class="language-python">df_sales.info()                       # rows, columns, non-null counts, dtypes
+df_sales.describe()                   # count/mean/std/min/quartiles/max — NUMERIC only
+df_sales.describe(include="object")   # count/unique/top/freq — CATEGORICAL only
+
+# value counts for every categorical column
+for col in df_sales.select_dtypes(include='object'):
+    print(df_sales[col].value_counts(), "\n ----- \n")</code></pre>
+    <p><strong>Mechanically:</strong></p>
+    <ul class="tight">
+      <li><code>.info()</code> — the fastest way to spot missing data: compare each column's <em>non-null count</em> to the total row count.</li>
+      <li><code>.describe()</code> — numeric summary. A <code>min</code> of <code>0</code> on <code>Item_Weight</code> or <code>Item_Visibility</code> is a red flag (see §2).</li>
+      <li><code>.describe(include="object")</code> — for text columns: <code>unique</code> = number of distinct categories, <code>top</code> = mode, <code>freq</code> = how often the mode appears.</li>
+      <li><code>select_dtypes(include='object')</code> — picks out only the categorical columns so the loop prints category frequencies.</li>
+    </ul>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap</b><code>describe()</code> silently <strong>ignores object columns</strong> unless you pass <code>include="object"</code> (or <code>include="all"</code>). If asked to summarise categorical variables and you just write <code>df.describe()</code>, you've answered the wrong question.</div>
+  </section>
+
+  <!-- ============ 2 MISSING ============ -->
+  <section class="sec" id="missing" data-group="The pipeline" data-badge="2">
+    <div class="sec-lead"><span class="num">2</span><h2>Missing values</h2></div>
+    <p>The heart of QP <strong>1a</strong> and QP <strong>2a</strong>. You must know how to <em>detect</em> them (including disguised ones), and the menu of <em>treatments</em> with a justification for each.</p>
+
+    <h3>Detect <span class="tag">count · %  · heatmap</span></h3>
+    <pre><code class="language-python"># count of nulls per column, worst first
+df_sales.isnull().sum().sort_values(ascending=False)
+
+# percentage missing per column
+(df_sales.isnull().sum() / len(df_sales) * 100).sort_values(ascending=False)
+
+# visual map of holes (white lines = missing)
+sns.heatmap(df_sales.isnull(), cbar=False)
+plt.show()</code></pre>
+    <p><strong>Mechanically:</strong> <code>isnull()</code> returns a True/False DataFrame; <code>.sum()</code> counts <code>True</code>s per column (True counts as 1). Dividing by <code>len(df)</code> and ×100 gives the percentage — the number examiners want when you "justify" dropping vs imputing.</p>
+
+    <p>A neat combined report (count + % + dtype in one table):</p>
+    <pre><code class="language-python">total   = df_sales.isnull().sum().sort_values(ascending=False)
+percent = ((df_sales.isnull().sum() / df_sales.shape[0]) * 100).sort_values(ascending=False)
+missing_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
+missing_data['Type'] = df_sales[missing_data.index].dtypes
+missing_data</code></pre>
+
+    <h3>Treatment A — Drop <span class="tag">the blunt option</span></h3>
+    <pre><code class="language-python">df_sales_drop = df_sales.dropna()   # drop any ROW containing a null
+df_sales_drop.shape                 # check how many rows survived</code></pre>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Pros / cons — say this out loud in 1a</b><strong>Drop:</strong> simple, no assumptions. But you <em>lose data</em> — fine if &lt;5% missing and rows are random (MCAR); dangerous if a lot is missing or missingness is systematic (you introduce bias). The notebook deliberately assigns to a <em>new</em> variable so the original <code>df_sales</code> is untouched — dropping is shown as <em>one option</em>, not the chosen one.</div>
+
+    <h3>Treatment B — Mode (categorical) <span class="tag">Outlet_Size</span></h3>
+    <pre><code class="language-python">df_sales.Outlet_Size.isnull().sum()   # how many missing
+df_sales.Outlet_Size.mode()           # most frequent category → 'Medium'
+
+# impute: replace NaN with the mode
+df_sales.Outlet_Size = df_sales.Outlet_Size.replace(np.nan, "Medium")</code></pre>
+    <p><strong>Why mode:</strong> <code>Outlet_Size</code> is categorical — mean/median are undefined for text, so you fill with the most common category.</p>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap</b><code>.mode()</code> returns a <strong>Series</strong> (there can be ties), not a scalar — that's why they read off <code>'Medium'</code> and hard-code it. In cleaner code you'd write <code>df.Outlet_Size.mode()[0]</code> to grab the first mode.</div>
+
+    <h3>Treatment C — Non-standard missing values <span class="tag">the QP loves this</span></h3>
+    <p>Missing data doesn't always look like <code>NaN</code>. It hides as <code>"?"</code>, <code>"na"</code>, <code>"--"</code>, <code>"NAN"</code>, or <code>0</code>. <strong>QP 2a explicitly says "Age contains the value 'NA'"</strong> — this is the exact skill.</p>
+    <pre><code class="language-python"># Step 1: convert the disguised markers to real NaN
+df_sales.Outlet_Location_Type = df_sales.Outlet_Location_Type.replace(to_replace="?",   value=np.nan)
+df_sales.Outlet_Location_Type = df_sales.Outlet_Location_Type.replace(to_replace="  --", value=np.nan)
+df_sales.Outlet_Location_Type = df_sales.Outlet_Location_Type.replace(to_replace="na",   value=np.nan)
+df_sales.Outlet_Location_Type = df_sales.Outlet_Location_Type.replace(to_replace="NAN",  value=np.nan)
+
+df_sales.Outlet_Location_Type.value_counts()
+df_sales.Outlet_Location_Type.isnull().sum()   # now the nulls are visible</code></pre>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">The rule to write in 2a</b><strong>Standardise disguised missing values to <code>np.nan</code> FIRST</strong>, then treat them. If you don't, <code>isnull()</code> can't see them and your imputation misses them. In one line: <code>df.replace(["?", "na", "NA", "--", "NAN"], np.nan, inplace=True)</code>.</div>
+
+    <h3>Treatment D — Domain-knowledge imputation <span class="tag">conditional logic</span></h3>
+    <p>Instead of one blanket value, impute based on a rule derived from another variable. Here, fill <code>Outlet_Location_Type</code> from the row's sales:</p>
+    <pre><code class="language-python"># look at mean sales per known location — the basis for the rule
+df_impute = df_sales[["Item_Outlet_Sales", "Outlet_Location_Type"]].dropna()
+df_impute = df_impute.groupby("Outlet_Location_Type").mean()
+
+# find indexes of the missing rows
+index = np.where(df_sales.Outlet_Location_Type.isnull())[0]
+
+# apply a domain rule row by row
+for ind in index:
+    if   df_sales.loc[ind, "Item_Outlet_Sales"] <= 2100:
+        df_sales.loc[ind, "Outlet_Location_Type"] = "Tier1"
+    elif df_sales.loc[ind, "Item_Outlet_Sales"] >= 2500:
+        df_sales.loc[ind, "Outlet_Location_Type"] = "Tier 2"
+    else:
+        df_sales.loc[ind, "Outlet_Location_Type"] = "Tier 3"</code></pre>
+    <p><strong>Mechanically:</strong> <code>np.where(condition)[0]</code> returns the positional indexes where the condition is True. The loop uses <code>.loc[row, col]</code> to read the sales and write the imputed category. This is "imputation using a related feature" — a strong point to name in 1a.</p>
+
+    <h3>Treatment E — Mean vs Median (numeric) <span class="tag">Item_Weight</span></h3>
+    <pre><code class="language-python">df_sales.Item_Weight = df_sales.Item_Weight.replace(0, np.nan)   # 0 kg is impossible → NaN
+
+mu  = df_sales["Item_Weight"].mean()
+med = df_sales["Item_Weight"].median()
+
+# preview both WITHOUT committing (fillna returns a copy here)
+df_sales["Item_Weight"].fillna(mu).describe()
+df_sales["Item_Weight"].fillna(med).describe()
+
+# commit: fill with the mean
+df_sales["Item_Weight"] = df_sales["Item_Weight"].fillna(mu)</code></pre>
+
+    <h3>Treatment F — Median for skewed data <span class="tag">Item_Visibility</span></h3>
+    <pre><code class="language-python">sns.histplot(df_sales["Item_Visibility"], kde=True)   # it's right-skewed
+
+med = df_sales["Item_Visibility"].median()
+df_sales.Item_Visibility = df_sales.Item_Visibility.replace(0, med)   # 0% visibility is impossible</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — mean vs median (asked constantly)</b>Use <strong>mean</strong> for roughly symmetric numeric data; use <strong>median</strong> when the variable is <strong>skewed or has outliers</strong>, because the mean is dragged toward the tail while the median is robust. <code>Item_Visibility</code> is skewed → median. That single sentence is worth marks in 1a and 2a.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Also worth naming in 1a</b>Beyond mean/median/mode you can mention: <strong>forward/backward fill</strong> (time series), <strong>KNN imputation</strong>, <strong>regression/model-based imputation</strong>, and <strong>a "Missing" category</strong> for categoricals. Range of methods = range of marks.</div>
+  </section>
+
+  <!-- ============ 3 ENCODING ============ -->
+  <section class="sec" id="encode" data-group="The pipeline" data-badge="3">
+    <div class="sec-lead"><span class="num">3</span><h2>Encoding categorical variables</h2></div>
+    <p>ML algorithms need numbers. Six methods here — knowing <em>when</em> to use each is the exam skill (QP 2b: "encode the categorical variable(s) appropriately").</p>
+
+    <h3>3.1 One-Hot — pandas <span class="tag">get_dummies</span></h3>
+    <pre><code class="language-python"># one 0/1 column per category (16 categories → 16 columns)
+dummy1 = pd.get_dummies(df_sales, columns=['Item_Type'], dtype=np.uint)
+
+# drop_first → k-1 columns, avoids the dummy-variable trap
+dummy2 = pd.get_dummies(df_sales, columns=['Item_Type'], drop_first=True)</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — the dummy-variable trap</b><code>drop_first=True</code> drops one dummy, leaving <strong>k−1</strong> columns for k categories. Why: the dropped category is implied when all others are 0, so keeping all k makes them perfectly collinear (<strong>multicollinearity</strong>), which breaks linear regression's coefficient estimates. Nominal variable + linear model ⇒ <code>drop_first=True</code>.</div>
+
+    <h3>3.2 One-Hot — sklearn <span class="tag">OneHotEncoder</span></h3>
+    <pre><code class="language-python">from sklearn.preprocessing import OneHotEncoder
+
+encode1 = OneHotEncoder()
+# fit_transform returns a SPARSE matrix → .toarray() to get a dense numpy array
+df_encode1 = pd.DataFrame(
+    encode1.fit_transform(df_sales[['Outlet_Type']]).toarray(),
+    columns=['Grocery Store','Supermarket Type1','Supermarket Type2','Supermarket Type3'])
+df_encode1 = pd.concat([df_sales.drop(columns='Outlet_Type'), df_encode1], axis=1)
+
+# cleaner modern form: dense output, drop first, pandas output
+encode2 = OneHotEncoder(sparse_output=False, drop="first").set_output(transform="pandas")
+df_encode2 = encode2.fit_transform(df_sales[['Outlet_Type']])</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — sklearn vs pandas one-hot</b>Two gotchas: (1) <code>OneHotEncoder</code> returns a <strong>sparse</strong> matrix by default → call <code>.toarray()</code> or pass <code>sparse_output=False</code>. (2) Use sklearn's encoder (not <code>get_dummies</code>) when you need to <strong>persist the fitted encoding and reuse it on the test set / new data</strong> — <code>get_dummies</code> can silently produce different columns on different data.</div>
+
+    <h3>3.3 Label Encoding <span class="tag">LabelEncoder</span></h3>
+    <pre><code class="language-python">from sklearn.preprocessing import LabelEncoder
+labelencoder = LabelEncoder()
+df_sales['Label_Encoded_Outlet_Size'] = labelencoder.fit_transform(df_sales.Outlet_Size)
+# High→0, Medium→1, Small→2  (ALPHABETICAL — order is arbitrary!)</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — the classic Label vs Ordinal question</b><code>LabelEncoder</code> assigns integers <strong>alphabetically</strong>, inventing a fake order (Small=2 &gt; Medium=1). A model then thinks Small &gt; Medium, which is nonsense. <strong>Use LabelEncoder for the target variable, or genuinely ordinal features only.</strong> For nominal features use one-hot; for ordered features use OrdinalEncoder with an explicit order (next).</div>
+
+    <h3>3.4 Ordinal Encoding <span class="tag">OrdinalEncoder</span></h3>
+    <pre><code class="language-python">from sklearn.preprocessing import OrdinalEncoder
+# YOU supply the correct order — this is the whole point
+orderencoding = OrdinalEncoder(categories=[["Small", "Medium", "High"]])
+df_sales['Order_Outlet_Size'] = orderencoding.fit_transform(df_sales[['Outlet_Size']])
+# Small→0, Medium→1, High→2  (meaningful order preserved)</code></pre>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">One-liner for the exam</b>Ordinal = "I <em>tell it</em> the order, so the numbers carry meaning." Label = "it picks the order alphabetically, so the numbers are just IDs." Use ordinal when the category has a natural ranking (Small &lt; Medium &lt; High, Low/Med/High, education levels).</div>
+
+    <h3>3.5 Frequency Encoding <span class="tag">high-cardinality</span></h3>
+    <pre><code class="language-python">encoding = df_sales.groupby('Item_Type').size() / len(df_sales)   # proportion per category
+df_sales['Freq_Encoded_Item_Type'] = df_sales.Item_Type.map(encoding) * 100</code></pre>
+    <p><strong>Why:</strong> replaces each category with how often it occurs. Keeps things to <em>one</em> column (unlike one-hot's explosion) — useful when a feature has many categories.</p>
+
+    <h3>3.6 Target / Mean Encoding <span class="tag">toy example</span></h3>
+    <pre><code class="language-python">df1 = pd.DataFrame({"smoker":["Yes"]*6+["No"]*4, "target":[1,1,1,0,0,0,0,0,0,1]})
+mean_encoded = df1.groupby('smoker')['target'].mean()   # Yes→0.5, No→0.25
+df1['encoded_smoker'] = df1['smoker'].map(mean_encoded)</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — target leakage</b>Target encoding replaces a category with the <strong>mean of the target</strong> for that category. Powerful, but it uses the target, so it <strong>leaks</strong> — always fit it on the training fold only (or use smoothing / cross-fold encoding), never on the full data before splitting.</div>
+  </section>
+
+  <!-- ============ 4 SCALING ============ -->
+  <section class="sec" id="scale" data-group="The pipeline" data-badge="4">
+    <div class="sec-lead"><span class="num">4</span><h2>Scaling / normalisation</h2></div>
+    <p>This is <strong>QP 1b</strong> (10 marks) almost word for word: "why is feature scaling important… different methods… effect on algorithm performance."</p>
+
+    <h3>4.1 StandardScaler <span class="tag">z-score / standardisation</span></h3>
+    <pre><code class="language-python">from sklearn.preprocessing import StandardScaler
+standard_scale = StandardScaler()
+df_sales['Scaled_Item_Outlet_Sales'] = standard_scale.fit_transform(df_sales[['Item_Outlet_Sales']])
+# result: mean ≈ 0, std ≈ 1, NOT bounded</code></pre>
+    <p>Formula: <code>z = (x − mean) / std</code>. Centres to mean 0, scales to unit variance. Not confined to any range.</p>
+
+    <h3>4.2 MinMaxScaler <span class="tag">normalisation</span></h3>
+    <pre><code class="language-python">from sklearn.preprocessing import MinMaxScaler
+min_max = MinMaxScaler()
+df_sales['minmax_Item_Outlet_Sales'] = min_max.fit_transform(df_sales[['Item_Outlet_Sales']])
+# result: squashed to [0, 1]</code></pre>
+    <p>Formula: <code>x' = (x − min) / (max − min)</code>. Rescales into <code>[0, 1]</code>.</p>
+
+    <div class="box info"><span class="ic">i</span><b class="lbl">Why scaling matters — the 1b answer</b>Distance- and gradient-based algorithms (<strong>KNN, K-means, SVM, PCA, gradient descent / neural nets</strong>) are dominated by large-magnitude features if you don't scale — e.g. income in ₹100,000s swamps age in tens. Scaling puts features on comparable footing and speeds gradient descent convergence. <strong>Tree-based models (Decision Tree, Random Forest, XGBoost) don't need scaling</strong> — they split on thresholds, not distances. Plain OLS Linear Regression doesn't <em>require</em> it either, but you scale for <strong>Ridge/Lasso</strong> (penalty is scale-sensitive) and for interpretable, comparable coefficients.</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — Standard vs MinMax</b><strong>StandardScaler</strong>: mean 0 / std 1, unbounded, less sensitive to outliers (relatively), assumes roughly Gaussian. <strong>MinMaxScaler</strong>: fixed <code>[0,1]</code> range, but <strong>very sensitive to outliers</strong> — one extreme max squashes everyone else near 0. Mention <strong>RobustScaler</strong> (uses median/IQR) as the outlier-proof third option for bonus marks.</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">THE scaling trap — fit on train only</b><code>fit_transform</code> on the <strong>training set</strong>, then <code>transform</code> (not fit) on the test set. Fitting the scaler on all data before splitting leaks test statistics into training = <strong>data leakage</strong>. The notebook scales the whole column for teaching, but in an exam answer always split first, then fit the scaler on the train set.</div>
+  </section>
+
+  <!-- ============ 5 TRANSFORM ============ -->
+  <section class="sec" id="transform" data-group="The pipeline" data-badge="5">
+    <div class="sec-lead"><span class="num">5</span><h2>Transformations</h2></div>
+    <p>Reshape a variable's <em>distribution</em> (scaling only shifts/stretches; transformation changes the shape). Main goal: reduce skew so it's closer to normal.</p>
+    <pre><code class="language-python">print('Skewness:', df_sales['Item_Outlet_Sales'].skew())        # right-skewed, positive value
+sns.histplot(df_sales['Item_Outlet_Sales'], kde=True)
+
+# LOG transform — pulls in the long right tail, reduces skew
+print('Skewness:', np.log(df_sales['Item_Outlet_Sales']).skew())  # closer to 0
+sns.histplot(np.log(df_sales['Item_Outlet_Sales']), kde=True)
+
+# EXP is the inverse: exp(log(x)) == x  (recovers the original)
+np.exp(np.log(df_sales['Item_Outlet_Sales']))</code></pre>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Skewness read</b><code>skew()</code> ≈ 0 → symmetric; <strong>&gt; 0 → right-skewed</strong> (long right tail, use log/sqrt); &lt; 0 → left-skewed. Log transform is the go-to fix for positive right-skewed data (sales, income, prices). This connects directly to <strong>QP 2d(e)</strong> — feature engineering for a non-linear relationship.</div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap</b><code>np.log</code> is undefined at 0 and negatives. For data with zeros use <code>np.log1p(x)</code> (= log(1+x)). Its inverse is <code>np.expm1</code>.</div>
+  </section>
+
+  <!-- ============ 6 OUTLIERS ============ -->
+  <section class="sec" id="outliers" data-group="The pipeline" data-badge="6">
+    <div class="sec-lead"><span class="num">6</span><h2>Outliers — 4 detection methods</h2></div>
+    <p><strong>QP 2d</strong> says "detect outliers using either IQR, boxplot, Z-score, or scatter plot" — this section <em>is</em> that question. Know all four.</p>
+
+    <h3>6.1 Boxplot <span class="tag">visual</span></h3>
+    <pre><code class="language-python">df_num = df_sales.select_dtypes(include=np.number)   # numeric columns only
+
+fig, ax = plt.subplots(2, 3, figsize=(15, 8))
+for variable, subplot in zip(df_num.columns, ax.flatten()):
+    sns.boxplot(x=df_num[variable], orient="h", whis=1.5, ax=subplot)</code></pre>
+    <p>The box = Q1→Q3 (the IQR); whiskers reach 1.5×IQR; points beyond are flagged outliers. <code>whis=1.5</code> is the standard fence.</p>
+
+    <h3>6.2 IQR method <span class="tag">the arithmetic behind the boxplot</span></h3>
+    <pre><code class="language-python">Q1 = df_num.quantile(0.25)
+Q3 = df_num.quantile(0.75)
+IQR = Q3 - Q1
+
+# keep rows where NO column is beyond the fences
+df_sales_iqr = df_num[~((df_num < (Q1 - 1.5*IQR)) | (df_num > (Q3 + 1.5*IQR))).any(axis=1)]
+df_sales_iqr.shape</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — decode this one-liner</b>Fences: <strong>lower = Q1 − 1.5·IQR</strong>, <strong>upper = Q3 + 1.5·IQR</strong>. <code>|</code> = OR (below lower OR above upper). <code>.any(axis=1)</code> = True if the row is an outlier in <em>any</em> column. <code>~</code> = NOT, so you <strong>keep the rows that are outliers in none of the columns</strong>. Being able to read this line aloud is a common viva/exam question.</div>
+
+    <h3>6.3 Z-score <span class="tag">how many std devs from the mean</span></h3>
+    <pre><code class="language-python">from scipy import stats
+z = stats.zscore(df_num["Profit"])                 # z = (x − mean) / std
+
+import numpy as np
+below = np.where(z < -3)          # more than 3 std below
+above = np.where(z >  3)          # more than 3 std above
+outlier_count = len(below[0]) + len(above[0])
+
+# keep the non-outliers
+df_sales_zscore = df_sales["Profit"][~((z < -3) | (z > 3))]</code></pre>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">The threshold to memorise</b><strong>|z| &gt; 3 ⇒ outlier.</strong> Z-score assumes an approximately <em>normal</em> distribution — that's its limitation vs IQR, which is distribution-free. Say both in 2d.</div>
+
+    <h3>6.4 Scatter plot <span class="tag">bivariate outliers</span></h3>
+    <pre><code class="language-python">sns.scatterplot(x=df_sales["Profit"], y=df_sales["Item_Outlet_Sales"])   # spot stray points
+
+# remove by a domain threshold read off the plot
+df_clean = df_sales[df_sales["Profit"] < 15]</code></pre>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Remove or retain? — the 2d judgement</b>Don't auto-delete. <strong>Retain</strong> if it's a genuine, valid extreme (real behaviour you want the model to learn). <strong>Remove/cap</strong> if it's a data-entry error, or it's distorting the fit and is rare. Alternatives to deletion: <strong>capping/winsorising</strong>, <strong>transformation</strong> (§5), or a robust model. State the reasoning — that's what "explain how you would decide" wants.</div>
+  </section>
+
+  <!-- ============ 7 FEATURE ENG ============ -->
+  <section class="sec" id="feature" data-group="The pipeline" data-badge="7">
+    <div class="sec-lead"><span class="num">7</span><h2>Feature engineering</h2></div>
+    <p>Create new, more informative features from existing ones. QP 2d(e) asks for exactly this kind of move.</p>
+    <pre><code class="language-python">from datetime import date
+current_year = date.today().year
+df_sales["Age_Outlet"] = current_year - df_sales["Outlet_Establishment_Year"]   # age from year
+
+# derive a category from an ID string
+df_sales['Product_type'] = df_sales['Item_Identifier'].apply(lambda x: x[0:2])  # first 2 letters
+df_sales['Product_type'] = df_sales['Product_type'].map(
+    {'FD':'Food', 'NC':'Non-Consumable', 'DR':'Drinks'})</code></pre>
+    <p><strong>Mechanically:</strong> <code>apply(lambda x: x[0:2])</code> runs a tiny function on every value to slice the first two characters; <code>map({...})</code> translates those codes into readable labels.</p>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap</b><code>Age_Outlet</code> uses <code>date.today().year</code>, so the feature <strong>changes every year the code runs</strong> — not reproducible. Better: subtract from a fixed reference year (e.g. the dataset's max year). Good point to raise if asked to critique the pipeline. And the log/interaction/polynomial features from §5 are the answer to "feature engineering for a non-linear relationship" in 2d(e) — e.g. add <code>km_driven²</code> or <code>log(km_driven)</code>.</div>
+  </section>
+
+  <!-- ============ 8 SPLIT ============ -->
+  <section class="sec" id="split" data-group="The pipeline" data-badge="8">
+    <div class="sec-lead"><span class="num">8</span><h2>Train / test split</h2></div>
+    <p>The final step before modelling — separate features from target, then hold out a test set. Appears in QP 2b and 2(b)a.</p>
+    <pre><code class="language-python">from sklearn.model_selection import train_test_split
+
+Y = df_sales['Item_Outlet_Sales']              # target (dependent)
+X = df_sales.drop(['Item_Outlet_Sales'], axis=1)   # features (independent) = everything else
+
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.25, random_state=100)
+
+print(X_train.shape, X_test.shape, Y_train.shape, Y_test.shape)</code></pre>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Exam trap — the two parameters they ask about</b><code>test_size=0.25</code> → 25% held out for testing, 75% train (common: 0.2–0.3). <code>random_state=100</code> → <strong>reproducibility</strong>: fixes the shuffle so you get the same split every run. Without it, the split (and your scores) change each time. <strong>Golden rule: split BEFORE scaling/encoding/imputation-fitting</strong> to avoid leakage.</div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Order of operations for a full answer</b>Inspect → clean missing → treat outliers → split → <em>fit</em> encoders/scalers on train, <em>apply</em> to test → model. Getting this order right is itself worth marks in the applied questions.</div>
+  </section>
+
+  <!-- ============ YOUR VERSION ============ -->
+  <section class="sec" id="yours" data-group="Your work" data-badge="◆">
+    <div class="sec-lead"><span class="num">◆</span><h2>Your version — reviewed &amp; tightened</h2></div>
+    <p>You rewrote the pipeline in a <strong>functional, reusable style</strong>. That's a genuine upgrade on the faculty notebook and it's <em>exactly</em> the shape the applied exam questions reward — you get a fresh dataset (real-estate, used-cars) and reusable functions generalise instantly. Here's the reviewed version with the two fixes applied.</p>
+
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Verdict — feasible, keep it</b>Your additions are sound: reusable imputation/outlier <strong>functions</strong>, richer EDA (<code>duplicated()</code>, min/max, negative-value checks), <strong>category standardisation</strong> (<code>LF/low fat → Low Fat</code>), batch garbage→NaN, and batch encoding. Two corrections below and it's exam-grade.</div>
+
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Two fixes</b><strong>(1) Ordering:</strong> your <code>garbage_values → np.nan</code> ran <em>after</em> mode-imputation, so disguised missings (<code>"NA"</code>, <code>" "</code>) got filled as real categories and the later replace left fresh NaNs nothing re-imputed. <strong>Standardise garbage → NaN FIRST, then impute.</strong> &nbsp;<strong>(2)</strong> <code>df_sales.dropna()</code> on its own line is a <strong>no-op</strong> — not reassigned. Drop it (you don't need it once imputation is done).</div>
+
+    <h3>The corrected order of operations <span class="tag">memorise this sequence</span></h3>
+    <pre><code class="language-python">import pandas as pd, numpy as np, seaborn as sns
+
+df = pd.read_csv("Train.csv")
+
+# 1. INSPECT
+df.shape;  df.info();  df.describe()
+print("duplicates:", df.duplicated().sum())          # your addition — good
+num_cols = df.select_dtypes(include=np.number).columns
+cat_cols = df.select_dtypes(include="object").columns
+for c in num_cols: print(c, "negatives:", (df[c] < 0).sum())   # invalid-value scan
+
+# 2. STANDARDISE disguised missing FIRST  ← fix (1): before any imputation
+garbage = [" ", "-", "--", "NA", "N/A", "na", "n/a"]
+df[cat_cols] = df[cat_cols].replace(garbage, np.nan)
+df["Item_Visibility"] = df["Item_Visibility"].replace(0, np.nan)   # 0% is impossible
+
+# 3. FIX category inconsistencies (your standardisation — keep)
+df["Item_Fat_Content"] = df["Item_Fat_Content"].replace(
+    {"LF": "Low Fat", "low fat": "Low Fat", "reg": "Regular"})
+
+# 4. IMPUTE — reusable functions (your pattern, kept)
+def fill_numeric(df, cols):          # median = robust to skew/outliers
+    for c in cols: df[c] = df[c].fillna(df[c].median())
+    return df
+def fill_categorical(df, cols):      # mode()[0] correctly grabs a scalar
+    for c in cols: df[c] = df[c].fillna(df[c].mode()[0])
+    return df
+df = fill_numeric(df, num_cols)
+df = fill_categorical(df, cat_cols)
+assert df.isnull().sum().sum() == 0   # ← no leftover NaNs now (fix (2): no dropna needed)</code></pre>
+
+    <h3>Outlier scan as a function <span class="tag">reusable across datasets</span></h3>
+    <pre><code class="language-python">def count_outliers_iqr(df, col):
+    Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower, upper = Q1 - 1.5*IQR, Q3 + 1.5*IQR
+    n = ((df[col] < lower) | (df[col] > upper)).sum()
+    print(f"{col:<20} bounds=({lower:.1f}, {upper:.1f})  outliers={n}")
+
+for c in df.select_dtypes(include=np.number).columns:
+    count_outliers_iqr(df, c)</code></pre>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Why this scores in the exam</b>QP 2a/2d hand you a new dataset and say "identify missing/non-standard values" and "detect outliers." A grader can see at a glance that a <em>function</em> generalises, whereas hard-coded <code>df.Outlet_Size.replace(...)</code> lines only handle one column. Reusable = fewer marks lost to omissions.</div>
+
+    <h3>Encoding — batched <span class="tag">ordinal + one-hot together</span></h3>
+    <pre><code class="language-python">from sklearn.preprocessing import OrdinalEncoder
+
+# ordered categories → ordinal (you supply the order)
+enc = OrdinalEncoder(categories=[
+    ["Small", "Medium", "High"],          # Outlet_Size
+    ["Tier 1", "Tier 2", "Tier 3"],       # Outlet_Location_Type (ordered)
+    ["Low Fat", "Regular"]])              # Item_Fat_Content (binary — one-hot also fine)
+df[["Outlet_Size_e", "Outlet_Location_e", "Item_Fat_e"]] = enc.fit_transform(
+    df[["Outlet_Size", "Outlet_Location_Type", "Item_Fat_Content"]])
+
+# nominal, many categories → one-hot
+dummies = pd.get_dummies(df[["Item_Type", "Outlet_Type"]], dtype="int")
+df = pd.concat([df, dummies], axis=1)
+
+# tidy up before modelling: drop the original text columns you just encoded
+df = df.drop(columns=["Outlet_Size", "Outlet_Location_Type", "Item_Fat_Content",
+                      "Item_Type", "Outlet_Type"])</code></pre>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Your encoding choices are correct</b>Ordinal for the ordered/binary fields, one-hot for the multi-category nominal fields — that's the right split. The only add is dropping the original object columns afterwards (last line) so you don't feed duplicate information to the model.</div>
+  </section>
+
+  <!-- ============ PRACTICE ============ -->
+  <section class="sec" id="practice" data-group="Exam" data-badge="✎">
+    <div class="sec-lead"><span class="num">✎</span><h2>Practice — worked from your actual QP</h2></div>
+    <p>These follow your model paper's format: <strong>pseudo-code</strong> for the applied questions, full prose for the theory ones. Click to reveal each answer. Everything here is answerable from Session 1.</p>
+
+    <details class="pcard">
+      <summary><span class="q">Q1 a</span> Methods to handle missing values — with pros, cons, scenarios <span class="mk">10 marks</span></summary>
+      <div class="ans">
+        <p><strong>Structure your answer as: detect → treat → justify.</strong></p>
+        <p><strong>Detection:</strong> <code>df.info()</code>, <code>df.isnull().sum()</code>, % missing, heatmap; and check for <em>disguised</em> missing values (<code>"?", "NA", "--", 0</code>) → convert to <code>np.nan</code> first.</p>
+        <p><strong>Methods:</strong></p>
+        <ul class="tight">
+          <li><strong>Deletion</strong> (<code>dropna</code>): rows or columns. <em>Pro:</em> simple, unbiased if data is MCAR. <em>Con:</em> loses information, shrinks sample. <em>Use when:</em> &lt;5% missing, missing at random.</li>
+          <li><strong>Mean imputation:</strong> <em>Pro:</em> keeps all rows, fast. <em>Con:</em> shrinks variance, distorted by skew/outliers. <em>Use when:</em> numeric, roughly symmetric.</li>
+          <li><strong>Median imputation:</strong> <em>Pro:</em> robust to outliers/skew. <em>Use when:</em> numeric and skewed (e.g. income, sales).</li>
+          <li><strong>Mode imputation:</strong> <em>Use when:</em> categorical.</li>
+          <li><strong>Domain/conditional imputation</strong> (fill from a related variable, group means): <em>Pro:</em> most informative. <em>Con:</em> subjective, needs domain knowledge.</li>
+          <li><strong>Advanced:</strong> KNN, regression/model-based, forward/backward fill (time series), or a dedicated "Missing" category. <em>Pro:</em> preserves structure. <em>Con:</em> complex, can overfit.</li>
+        </ul>
+        <p><strong>Justify:</strong> choice depends on % missing, data type, distribution (mean vs median), and whether missingness is random.</p>
+      </div>
+    </details>
+
+    <details class="pcard">
+      <summary><span class="q">Q1 b</span> Why feature scaling matters, methods, effect on algorithms <span class="mk">10 marks</span></summary>
+      <div class="ans">
+        <p><strong>Why:</strong> features on different scales (age in tens vs income in lakhs) let large-magnitude features dominate distance and gradient computations, biasing the model and slowing convergence.</p>
+        <p><strong>Methods:</strong> (1) <strong>Standardisation</strong> <code>z=(x−μ)/σ</code> → mean 0, std 1, unbounded, robust-ish to outliers. (2) <strong>Min-Max normalisation</strong> <code>(x−min)/(max−min)</code> → <code>[0,1]</code>, sensitive to outliers. (3) <strong>RobustScaler</strong> (median/IQR) → outlier-proof. Give the sklearn snippet for each and stress <strong>fit on train, transform on test</strong>.</p>
+        <p><strong>Effect on algorithms:</strong> <em>Needs scaling</em> — KNN, K-means, SVM, PCA, neural nets / gradient descent, Ridge/Lasso. <em>Doesn't need it</em> — tree-based models (DT, RF, XGBoost) and plain OLS (though scaling aids coefficient interpretation). Conclusion: scaling improves accuracy and convergence for distance/gradient methods; neutral for trees.</p>
+      </div>
+    </details>
+
+    <details class="pcard">
+      <summary><span class="q">Q2 a</span> Real-estate: inspect, handle missing/non-standard, encode, X/y, split, outliers <span class="mk">10 marks · pseudo-code</span></summary>
+      <div class="ans">
+        <p>Columns: <code>Area, Bedrooms, Age, Location, Parking, Distance_to_City, Price</code>. This is a pure Session 1 walkthrough:</p>
+        <pre><code class="language-python"># (a) inspect + missing / non-standard missing
+df.info();  df.describe();  df.isnull().sum()
+df = df.replace(["NA", "?", "--", "na"], np.nan)     # Age had "NA"
+df["Age"]  = pd.to_numeric(df["Age"], errors="coerce")
+df["Area"] = df["Area"].fillna(df["Area"].median())  # Area skewed → median
+df["Age"]  = df["Age"].fillna(df["Age"].median())
+# justify: median is robust to the "unusually large Area" outliers
+
+# (b) encode + X/y + split
+df = pd.get_dummies(df, columns=["Location"], drop_first=True)  # nominal → one-hot, k-1
+X = df.drop("Price", axis=1);  y = df["Price"]
+X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42)
+
+# (c) relationship Area~Price + correlation
+sns.scatterplot(x=df["Area"], y=df["Price"])
+df.corr(numeric_only=True)["Price"].sort_values()   # strongest |corr| with Price
+
+# (d) outliers in Area (IQR)
+Q1, Q3 = df["Area"].quantile(.25), df["Area"].quantile(.75)
+IQR = Q3 - Q1
+mask = (df["Area"] < Q1 - 1.5*IQR) | (df["Area"] > Q3 + 1.5*IQR)
+# decide: remove if data-entry error / distorting; retain if genuine luxury property</code></pre>
+        <p><strong>(e) Two EDA observations that influence modelling:</strong> e.g. "Area is right-skewed with high-end outliers → consider log-transform or capping"; "Area has the strongest correlation with Price → likely the key predictor; watch for multicollinearity with Bedrooms."</p>
+      </div>
+    </details>
+
+    <details class="pcard">
+      <summary><span class="q">Q2 d(a)</span> Is scaling required for the technique you plan to use? <span class="mk">applied</span></summary>
+      <div class="ans">
+        <p>Answer depends on the model: <strong>Linear/Ridge/Lasso → yes</strong> (especially Ridge/Lasso, whose penalty is scale-sensitive, and features here — <code>Engine_CC, Kilometers_Driven</code> — differ by orders of magnitude). <strong>Tree-based → no.</strong> Code: <code>StandardScaler().fit(X_train)</code> then <code>.transform(X_test)</code>. Always fit on train only.</p>
+      </div>
+    </details>
+
+    <div class="box info"><span class="ic">i</span><b class="lbl">Upload the rest and I'll extend this</b>Your QP also tests bias–variance (1c), hyperparameter tuning (1d), feature selection FFS/BE/RFE (1e), MLR + MAE/RMSE/R² (2b), regression assumptions &amp; residuals (2c), Ridge/Lasso (2d), and cross-validation (2e) — none of which are in Session 1. Send me those session notebooks/slides and I'll add worked answers for each.</div>
+  </section>
+
+  <!-- ============ GAPS ============ -->
+  <section class="sec" id="gaps" data-group="Exam" data-badge="!">
+    <div class="sec-lead"><span class="num">!</span><h2>What your exam tests that's NOT in Session 1</h2></div>
+    <p>So you don't walk in thinking preprocessing is the whole paper. These need other sessions' material — grab them next:</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>QP</th><th>Topic to revise elsewhere</th></tr></thead>
+        <tbody>
+          <tr><td>1c</td><td>Bias–variance tradeoff; underfitting vs overfitting; regularisation, more data, CV</td></tr>
+          <tr><td>1d</td><td>Hyperparameters vs model parameters; GridSearchCV / RandomizedSearchCV / Bayesian; is tuning applicable to plain LR?</td></tr>
+          <tr><td>1e</td><td>Feature selection — Forward Selection, Backward Elimination, RFE</td></tr>
+          <tr><td>2b</td><td>Multiple Linear Regression; MAE, RMSE, R²; coefficient interpretation; adjusted R²</td></tr>
+          <tr><td>2c</td><td>Linear-regression assumptions; residual plots; diagnosing overfitting</td></tr>
+          <tr><td>2d</td><td>Ridge vs Lasso; RMSE-based model selection</td></tr>
+          <tr><td>2e</td><td>k-fold cross-validation in Python; comparing CV score to test score</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="sec" id="cheat" data-group="Exam" data-badge="≡">
+    <div class="sec-lead"><span class="num">≡</span><h2>Quick cheat sheet</h2></div>
+    <p>Night-before, one-glance reference. Every command from Session 1.</p>
+
+    <p class="codecap">Inspect</p>
+    <pre><code class="language-python">df.info()                          # dtypes + non-null counts
+df.describe()                      # numeric summary
+df.describe(include="object")      # categorical summary
+df["col"].value_counts()           # category frequencies
+df.corr(numeric_only=True)         # correlation matrix</code></pre>
+
+    <p class="codecap">Missing values</p>
+    <pre><code class="language-python">df.isnull().sum()                              # count per column
+df.isnull().sum()/len(df)*100                  # percentage
+df.replace(["?","NA","--","na"], np.nan)       # standardise disguised → NaN
+df["c"] = df["c"].replace(0, np.nan)           # impossible 0 → NaN
+df = df.dropna()                               # drop rows with any NaN
+df["c"] = df["c"].fillna(df["c"].mean())       # numeric, symmetric
+df["c"] = df["c"].fillna(df["c"].median())     # numeric, skewed / outliers
+df["c"] = df["c"].fillna(df["c"].mode()[0])    # categorical</code></pre>
+
+    <p class="codecap">Encoding</p>
+    <pre><code class="language-python">pd.get_dummies(df, columns=["c"], drop_first=True)          # nominal → one-hot (k-1)
+OneHotEncoder(sparse_output=False, drop="first")            # sklearn, reusable
+LabelEncoder().fit_transform(df["c"])                        # target / ordinal only
+OrdinalEncoder(categories=[["Low","Med","High"]])            # ordered categories
+df["c"].map(df.groupby("c").size()/len(df))                  # frequency encoding
+df["c"].map(df.groupby("c")["target"].mean())               # target encoding (leak risk)</code></pre>
+
+    <p class="codecap">Scaling &amp; transforming</p>
+    <pre><code class="language-python">StandardScaler().fit_transform(X)   # mean 0, std 1  (unbounded)
+MinMaxScaler().fit_transform(X)     # range [0, 1]   (outlier-sensitive)
+np.log(x)      # reduce right skew          np.log1p(x)  # if zeros present
+df["c"].skew()  # >0 right-skew, <0 left-skew, ~0 symmetric</code></pre>
+
+    <p class="codecap">Outliers</p>
+    <pre><code class="language-python"># IQR: keep rows inside the fences
+Q1,Q3 = df.quantile(.25), df.quantile(.75);  IQR = Q3-Q1
+df[~((df < Q1-1.5*IQR) | (df > Q3+1.5*IQR)).any(axis=1)]
+# Z-score: |z|>3 is an outlier
+from scipy import stats;  z = stats.zscore(df["c"]);  df[abs(z)<=3]
+sns.boxplot(x=df["c"]);   sns.scatterplot(x=df["a"], y=df["b"])</code></pre>
+
+    <p class="codecap">Feature engineering &amp; split</p>
+    <pre><code class="language-python">df["Age"] = ref_year - df["Year"]                 # age from year (use a FIXED ref)
+df["cat"] = df["id"].apply(lambda x: x[:2]).map({...})
+from sklearn.model_selection import train_test_split
+X = df.drop("target", axis=1);  y = df["target"]
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=100)</code></pre>
+
+    <p class="codecap">The 8 things examiners trap you on</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Trap</th><th>The right answer</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Mean vs median imputation</td><td>Median for skewed / outlier-prone; mean for symmetric</td></tr>
+          <tr><td>2</td><td>Disguised missing values</td><td>Convert <code>"?","NA",0</code> → <code>np.nan</code> BEFORE treating</td></tr>
+          <tr><td>3</td><td><code>drop_first=True</code></td><td>k−1 dummies, avoids multicollinearity (dummy trap)</td></tr>
+          <tr><td>4</td><td>Label vs Ordinal encoding</td><td>Label = arbitrary/alphabetical (target only); Ordinal = you set the order</td></tr>
+          <tr><td>5</td><td>Standard vs MinMax</td><td>Standard = mean0/std1 unbounded; MinMax = [0,1], outlier-sensitive</td></tr>
+          <tr><td>6</td><td>OneHotEncoder output</td><td>Sparse by default → <code>.toarray()</code> / <code>sparse_output=False</code></td></tr>
+          <tr><td>7</td><td>IQR / Z-score thresholds</td><td>Fence = 1.5×IQR;  outlier if <code>|z|&gt;3</code></td></tr>
+          <tr><td>8</td><td>Data leakage</td><td>Split FIRST, then fit scaler/encoder on train, transform test; <code>random_state</code> for reproducibility</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>Built from the Session 1 faculty notebook (<code>bigmartsales</code>) and mapped to the SMLR ESA model paper. Code snippets condensed for revision — variable names match the notebook. Upload the other session materials to extend Practice into the modelling questions (1c–1e, 2b–2e).</p>
+  </div>
+
+</main>
+</div>
+
+<script src="../assets/js/theme.js"></script>
+</body>
+</html>
