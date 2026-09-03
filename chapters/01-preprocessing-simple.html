@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Preprocessing — Simple</title>
+<meta name="description" content="A shorter, plainer pass over the same Session 1 notebook — code, why it's used, and a ready-to-write exam answer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="shell">
+<aside>
+  <p class="brand"><a href="../index.html">SMLR Exam Kit</a><small>ML1 · Session notes</small></p>
+  <div class="tog" role="group" aria-label="Theme">
+    <button data-set="light" aria-pressed="false">Light</button>
+    <button data-set="auto" aria-pressed="true">Auto</button>
+    <button data-set="dark" aria-pressed="false">Dark</button>
+  </div>
+  <nav>
+    <div class="grp">Chapters</div>
+    <a href="01-preprocessing.html"><span class="n">01</span><span>Preprocessing Exam Kit</span></a>
+    <a class="active" href="01-preprocessing-simple.html"><span class="n">01-simple</span><span>Data Preprocessing — Simple</span></a>
+    <a href="02-linear-regression.html"><span class="n">02</span><span>Linear Regression Exam Kit</span></a>
+    <a href="02-linear-regression-simple.html"><span class="n">02-simple</span><span>Linear Regression — Simple</span></a>
+    <div class="grp">In this chapter</div>
+    <div class="grp">Pipeline</div>
+    <a href="#summary"><span class="n">1</span><span>Data Summary</span></a>
+    <a href="#missing"><span class="n">2</span><span>Missing Values</span></a>
+    <a href="#encoding"><span class="n">3</span><span>Encoding Categorical Data</span></a>
+    <a href="#scaling"><span class="n">4</span><span>Scaling</span></a>
+    <a href="#transform"><span class="n">5</span><span>Transformation</span></a>
+    <a href="#outliers"><span class="n">6</span><span>Outliers</span></a>
+    <a href="#feature"><span class="n">7</span><span>Feature Engineering</span></a>
+    <a href="#split"><span class="n">8</span><span>Train and Test Split</span></a>
+    <div class="grp">Exam</div>
+    <a href="#exam"><span class="n">★</span><span>Exam-Ready Answer: Data Preprocessing</span></a>
+    <a href="#quick"><span class="n">≡</span><span>Quick Revision</span></a>
+  </nav>
+</aside>
+
+<main>
+<div class="hero"><span class="eyebrow">ML1 · Session 1 · BigMart Sales</span><h1>Data Preprocessing — Simple Exam Kit</h1>
+<p class="lede">Simple exam notes based mainly on the faculty class notebook. Focus on understanding the code, why it is used, and what to write in the exam.</p></div>
+
+<section class="sec" id="summary" data-group="Pipeline" data-badge="1"><div class="sec-lead"><span class="num">1</span><h2>Data Summary</h2></div>
+<p><b>Purpose:</b> First understand the dataset before changing anything.</p>
+<pre><code>df_sales.info()
+df_sales.describe()
+df_sales.describe(include="object")
+
+for col in df_sales.select_dtypes(include='object'):
+    print(df_sales[col].value_counts())</code></pre>
+<div class="box tip"><b>Remember:</b> <code>info()</code> → columns, data types, non-null values. <code>describe()</code> → numeric summary. <code>describe(include="object")</code> → categorical summary.</div></section>
+
+<section class="sec" id="missing" data-group="Pipeline" data-badge="2"><div class="sec-lead"><span class="num">2</span><h2>Missing Values</h2></div>
+<p><b>Purpose:</b> Find missing values and decide how to treat them.</p>
+<pre><code>df_sales.isnull().sum()</code></pre>
+<h3>2.1 Drop rows</h3><pre><code>df_sales_drop = df_sales.dropna()</code></pre>
+<p>Use when only a small number of rows are missing and removing them will not hurt the dataset.</p>
+<h3>2.2 Categorical → Mode</h3><pre><code>df_sales.Outlet_Size.mode()
+df_sales.Outlet_Size = df_sales.Outlet_Size.replace(np.nan, "Medium")</code></pre>
+<p><b>Mode = most common value.</b> Use for categorical data.</p>
+<h3>2.3 Non-standard missing values</h3>
+<pre><code>df_sales = df_sales.replace(["?", "--", "na", "NA", "NAN"], np.nan)
+df_sales.isnull().sum()</code></pre>
+<div class="box trap"><b>Exam point:</b> Convert values such as <code>NA</code>, <code>?</code>, <code>--</code> to <code>np.nan</code> first. Then treat them.</div>
+<h3>2.4 Numeric → Mean or Median</h3><pre><code># roughly symmetric data
+df_sales["Item_Weight"] = df_sales["Item_Weight"].fillna(
+    df_sales["Item_Weight"].mean())
+
+# skewed data
+med = df_sales["Item_Visibility"].median()
+df_sales.Item_Visibility = df_sales.Item_Visibility.replace(0, med)</code></pre>
+<div class="box tip"><b>Easy rule:</b> Mean → roughly symmetric. Median → skewed / outliers. Mode → categorical.</div>
+<h3>2.5 Domain knowledge</h3><p>Sometimes a missing value can be filled using another related column and a business rule. The class notebook uses sales to decide the outlet location tier.</p></section>
+
+<section class="sec" id="encoding" data-group="Pipeline" data-badge="3"><div class="sec-lead"><span class="num">3</span><h2>Encoding Categorical Data</h2></div>
+<p>ML algorithms need numbers, so categorical values must be converted into numbers.</p>
+<h3>3.1 One-Hot Encoding — Pandas</h3><pre><code>dummy_encode1 = pd.get_dummies(
+    df_sales, columns=['Item_Type'], dtype=np.uint)
+
+dummy_encode2 = pd.get_dummies(
+    df_sales, drop_first=True, columns=['Item_Type'])</code></pre>
+<p><b>Use:</b> categories with no natural order. Each category becomes a 0/1 column.</p>
+<div class="box trap"><b>drop_first=True:</b> if there are <b>k</b> categories, keep <b>k−1</b> dummy columns. Useful for linear regression.</div>
+<h3>3.2 One-Hot Encoding — sklearn</h3><pre><code>from sklearn.preprocessing import OneHotEncoder
+
+encode1 = OneHotEncoder()
+
+df_encode1 = pd.DataFrame(
+    encode1.fit_transform(df_sales[['Outlet_Type']]).toarray()
+)</code></pre>
+<p>The class also shows the cleaner form:</p><pre><code>encode2 = OneHotEncoder(
+    sparse_output=False, drop="first"
+).set_output(transform="pandas")</code></pre>
+<h3>3.3 Label Encoding</h3><pre><code>from sklearn.preprocessing import LabelEncoder
+
+labelencoder = LabelEncoder()
+df_sales['Label_Encoded_Outlet_Size'] = \
+    labelencoder.fit_transform(df_sales.Outlet_Size)</code></pre>
+<p>It changes categories to integer labels. The class example uses it on <code>Outlet_Size</code>.</p>
+<h3>3.4 Ordinal Encoding</h3><pre><code>from sklearn.preprocessing import OrdinalEncoder
+
+orderencoding = OrdinalEncoder(
+    categories=[["Small", "Medium", "High"]])
+
+df_sales['Order_Outlet_Size'] = \
+    orderencoding.fit_transform(df_sales[['Outlet_Size']])</code></pre>
+<div class="box tip"><b>Easy difference:</b> Label Encoding → gives labels. Ordinal Encoding → you explicitly give the correct order.</div>
+<h3>3.5 Frequency Encoding</h3><pre><code>encoding = df_sales.groupby('Item_Type').size()
+encoding = encoding / len(df_sales)
+
+df_sales['Freq_Encoded_Item_Type'] = \
+    df_sales.Item_Type.map(encoding) * 100</code></pre>
+<p>Each category is replaced by how frequently it appears.</p>
+<h3>3.6 Target / Mean Encoding</h3><pre><code>mean_encoded = df1.groupby('smoker')['target'].mean()
+df1['encoded_smoker'] = df1['smoker'].map(mean_encoded)</code></pre>
+<p>Each category is replaced by the average target value for that category.</p></section>
+
+<section class="sec" id="scaling" data-group="Pipeline" data-badge="4"><div class="sec-lead"><span class="num">4</span><h2>Scaling</h2></div>
+<p><b>Purpose:</b> Put numeric variables on comparable scales so a large-valued feature does not dominate just because of its size.</p>
+<h3>4.1 StandardScaler</h3><pre><code>from sklearn.preprocessing import StandardScaler
+
+standard_scale = StandardScaler()
+
+df_sales['Scaled_Item_Outlet_Sales'] = \
+    standard_scale.fit_transform(
+        df_sales[['Item_Outlet_Sales']])</code></pre>
+<div class="eq">z = (x − mean) / standard deviation</div>
+<p>Result: mean is approximately <b>0</b> and standard deviation approximately <b>1</b>.</p>
+<h3>4.2 Min-Max Normalization</h3><pre><code>from sklearn.preprocessing import MinMaxScaler
+
+min_max = MinMaxScaler()
+
+df_sales['minmax_Item_Outlet_Sales'] = \
+    min_max.fit_transform(df_sales[['Item_Outlet_Sales']])</code></pre>
+<div class="eq">x' = (x − min) / (max − min)</div>
+<p>Result is between <b>0 and 1</b>.</p>
+<div class="box tip"><b>Remember:</b> StandardScaler → mean 0, std 1. Min-Max → range 0 to 1.</div></section>
+
+<section class="sec" id="transform" data-group="Pipeline" data-badge="5"><div class="sec-lead"><span class="num">5</span><h2>Transformation</h2></div>
+<p>Transformation changes the <b>shape</b> of data. The class notebook studies Log and Exponential transformation.</p>
+<h3>5.1 Log Transformation</h3><pre><code>print(df_sales['Item_Outlet_Sales'].skew())
+
+np.log(df_sales['Item_Outlet_Sales']).skew()
+
+sns.histplot(np.log(df_sales['Item_Outlet_Sales']), kde=True)</code></pre>
+<p>Log transformation is useful for reducing right skew.</p>
+<div class="eq">log(x) → reduces a long right tail</div>
+<h3>5.2 Exponential Transformation</h3><pre><code>np.exp(np.log(df_sales['Item_Outlet_Sales']))</code></pre>
+<p>Exponential reverses the log transformation.</p><div class="box trap"><b>Remember:</b> <code>np.log(x)</code> cannot be used directly when x is 0 or negative.</div></section>
+
+<section class="sec" id="outliers" data-group="Pipeline" data-badge="6"><div class="sec-lead"><span class="num">6</span><h2>Outliers</h2></div>
+<p><b>Outlier:</b> a value that is unusually far from the other observations. Outliers can affect results.</p>
+<h3>6.1 Boxplot</h3><pre><code>df_num = df_sales.select_dtypes(include=np.number)
+df_num.boxplot()</code></pre>
+<p>Boxplots give a visual way to spot unusual values.</p>
+<h3>6.2 IQR Method</h3><pre><code>Q1 = df_num.quantile(0.25)
+Q3 = df_num.quantile(0.75)
+
+IQR = Q3 - Q1
+
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR</code></pre>
+<div class="eq">IQR = Q3 − Q1<br>Lower = Q1 − 1.5(IQR)<br>Upper = Q3 + 1.5(IQR)</div>
+<p>Values below lower or above upper are treated as outliers.</p>
+<h3>6.3 Z-Score</h3><pre><code>from scipy import stats
+
+z_scores = scipy.stats.zscore(df_num["Profit"])
+
+# outliers
+z_scores < -3
+z_scores > 3</code></pre>
+<div class="eq">z = (x − mean) / standard deviation</div>
+<p>If <b>z &gt; 3</b> or <b>z &lt; −3</b>, the class notebook considers it an outlier.</p>
+<h3>6.4 Scatter Plot</h3><pre><code>sns.scatterplot(
+    x=df_sales["Profit"],
+    y=df_sales["Item_Outlet_Sales"])</code></pre>
+<p>Scatter plots show relationships between two numeric variables and can also help identify unusual points.</p></section>
+
+<section class="sec" id="feature" data-group="Pipeline" data-badge="7"><div class="sec-lead"><span class="num">7</span><h2>Feature Engineering</h2></div>
+<p><b>Feature engineering</b> means creating a useful new feature from existing data.</p>
+<h3>Example 1 — Outlet Age</h3><pre><code>from datetime import date
+
+current_year = date.today().year
+
+df_sales["Age_Outlet"] = \
+    current_year - df_sales["Outlet_Establishment_Year"]</code></pre>
+<p>Instead of using only the establishment year, we create the outlet's age.</p>
+<h3>Example 2 — Product Type</h3><pre><code>df_sales['Product_type'] = \
+    df_sales['Item_Identifier'].apply(lambda x: x[0:2])
+
+df_sales['Product_type'] = df_sales['Product_type'].map({
+    'FD':'Food',
+    'NC':'Non-Consumable',
+    'DR':'Drinks'
+})</code></pre>
+<p>The first two characters of <code>Item_Identifier</code> are converted into a meaningful product type.</p></section>
+
+<section class="sec" id="split" data-group="Pipeline" data-badge="8"><div class="sec-lead"><span class="num">8</span><h2>Train and Test Split</h2></div>
+<p>Split the data so the model learns from one part and is tested on unseen data.</p>
+<pre><code>from sklearn.model_selection import train_test_split
+
+Y = df_sales['Item_Outlet_Sales']
+X = df_sales.drop(['Item_Outlet_Sales'], axis=1)
+
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.25, random_state=100)</code></pre>
+<div class="box tip"><b>Meaning:</b> X = input/features. Y = target. <code>test_size=0.25</code> means 25% test data and 75% training data. <code>random_state=100</code> makes the split reproducible.</div></section>
+
+<section class="sec" id="exam" data-group="Exam" data-badge="★"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Answer: Data Preprocessing</h2></div>
+<div class="answer"><p><b>Definition:</b> Data preprocessing is the process of preparing raw data for machine learning.</p>
+<p><b>Steps:</b></p><ol><li>Understand the data using <code>info()</code> and <code>describe()</code>.</li><li>Detect and treat missing values.</li><li>Convert categorical data into numeric form using suitable encoding.</li><li>Scale numeric features when required.</li><li>Transform skewed data if needed.</li><li>Detect outliers using boxplot, IQR, Z-score or scatter plot.</li><li>Create useful features through feature engineering.</li><li>Split data into training and testing sets.</li></ol>
+<p><b>Conclusion:</b> Proper preprocessing improves the quality and suitability of data for machine learning.</p></div></section>
+
+<section class="sec" id="quick" data-group="Exam" data-badge="≡"><div class="sec-lead"><span class="num">≡</span><h2>Quick Revision</h2></div>
+<table><tr><th>Topic</th><th>Remember this</th></tr>
+<tr><td>Missing</td><td>Numeric → mean/median; categorical → mode.</td></tr>
+<tr><td>Non-standard missing</td><td>Convert NA, ?, -- etc. → <code>np.nan</code>.</td></tr>
+<tr><td>One-hot</td><td>Nominal categories → 0/1 columns.</td></tr>
+<tr><td>Ordinal</td><td>Use when categories have a real order.</td></tr>
+<tr><td>Frequency</td><td>Category → percentage/frequency.</td></tr>
+<tr><td>StandardScaler</td><td>Mean 0, standard deviation 1.</td></tr>
+<tr><td>Min-Max</td><td>Values between 0 and 1.</td></tr>
+<tr><td>IQR</td><td>Outlier if below Q1−1.5IQR or above Q3+1.5IQR.</td></tr>
+<tr><td>Z-score</td><td>Usually outlier when z &lt; −3 or z &gt; 3.</td></tr>
+<tr><td>Train/Test</td><td>Train = learn; Test = evaluate on unseen data.</td></tr></table></section>
+
+</main>
+</div>
+
+<script src="../assets/js/theme.js"></script>
+</body>
+</html>

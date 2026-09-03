@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Regression — Simple</title>
+<meta name="description" content="A shorter, plainer pass over the same Session 2 notebook — code, why it's used, and a ready-to-write exam answer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="shell">
+<aside>
+  <p class="brand"><a href="../index.html">SMLR Exam Kit</a><small>ML1 · Session notes</small></p>
+  <div class="tog" role="group" aria-label="Theme">
+    <button data-set="light" aria-pressed="false">Light</button>
+    <button data-set="auto" aria-pressed="true">Auto</button>
+    <button data-set="dark" aria-pressed="false">Dark</button>
+  </div>
+  <nav>
+    <div class="grp">Chapters</div>
+    <a href="01-preprocessing.html"><span class="n">01</span><span>Preprocessing Exam Kit</span></a>
+    <a href="01-preprocessing-simple.html"><span class="n">01-simple</span><span>Data Preprocessing — Simple</span></a>
+    <a href="02-linear-regression.html"><span class="n">02</span><span>Linear Regression Exam Kit</span></a>
+    <a class="active" href="02-linear-regression-simple.html"><span class="n">02-simple</span><span>Linear Regression — Simple</span></a>
+    <div class="grp">In this chapter</div>
+    <div class="grp">Simple Linear Regression</div>
+    <a href="#picture"><span class="n">1</span><span>Big Picture</span></a>
+    <a href="#data"><span class="n">2</span><span>Prepare the Data</span></a>
+    <a href="#ols"><span class="n">3</span><span>Ordinary Least Squares (OLS)</span></a>
+    <a href="#manual"><span class="n">4</span><span>Calculate b0 and b1 Manually</span></a>
+    <a href="#line"><span class="n">5</span><span>Draw the Regression Line</span></a>
+    <a href="#statsmodels"><span class="n">6</span><span>Build OLS Using Statsmodels</span></a>
+    <a href="#interpret"><span class="n">7</span><span>Interpret the Regression Equation</span></a>
+    <div class="grp">Exam</div>
+    <a href="#exam"><span class="n">★</span><span>Exam-Ready Answer: Simple Linear Regression</span></a>
+    <a href="#quick"><span class="n">≡</span><span>Quick Revision</span></a>
+  </nav>
+</aside>
+
+<main>
+<div class="hero"><span class="eyebrow">ML1 · Session 2 · Car Premium</span><h1>Linear Regression — Simple Exam Kit</h1>
+<p class="lede">Simple exam notes based mainly on the faculty class notebook. Focus on understanding the code, why it is used, and what to write in the exam.</p></div>
+
+<section class="sec" id="picture" data-group="Simple Linear Regression" data-badge="1"><div class="sec-lead"><span class="num">1</span><h2>Big Picture</h2></div>
+<p><b>Linear Regression</b> is used to predict a numeric value using one or more input variables.</p>
+<div class="box tip"><b>Class example:</b> Predict <b>Premium</b> of a vehicle using <b>Mileage</b>.</div>
+<div class="eq">Premium = b0 + b1 × Mileage</div>
+<p>Think of it as drawing the best straight line through the data points.</p>
+<table><tr><th>Term</th><th>Simple meaning</th></tr><tr><td>X</td><td>Input / predictor → Mileage</td></tr><tr><td>Y</td><td>Output / target → Premium</td></tr><tr><td>b0</td><td>Intercept</td></tr><tr><td>b1</td><td>Slope</td></tr></table></section>
+
+<section class="sec" id="data" data-group="Simple Linear Regression" data-badge="2"><div class="sec-lead"><span class="num">2</span><h2>Prepare the Data</h2></div>
+<pre><code>df = pd.read_csv('carpremium.csv')
+df.head()
+
+df.info()
+df.shape
+
+sns.scatterplot(x=df['Mileage'], y=df['Premium'])
+df.corr()
+
+df.isnull().sum()</code></pre>
+<p><b>Why?</b> First check the data, its size, the relationship between X and Y, and missing values.</p>
+<div class="box tip"><b>Class notebook:</b> The dataset is very small, so train-test split is not performed for this simple regression demonstration.</div></section>
+
+<section class="sec" id="ols" data-group="Simple Linear Regression" data-badge="3"><div class="sec-lead"><span class="num">3</span><h2>Ordinary Least Squares (OLS)</h2></div>
+<p><b>OLS</b> finds the straight line that gives the smallest total squared error.</p>
+<div class="eq">Minimise: Σ(y − ŷ)²</div>
+<p>Here <code>y</code> is the actual value and <code>ŷ</code> is the predicted value.</p>
+<div class="box">Imagine several points on paper. OLS moves the line until the total squared distance between the points and the line is as small as possible.</div></section>
+
+<section class="sec" id="manual" data-group="Simple Linear Regression" data-badge="4"><div class="sec-lead"><span class="num">4</span><h2>Calculate b0 and b1 Manually</h2></div>
+<p>The faculty notebook calculates the slope and intercept directly.</p>
+<pre><code>x = df['Mileage']
+y = df['Premium']
+
+x_bar = np.mean(x)
+y_bar = np.mean(y)
+
+num = np.sum((x - x_bar) * (y - y_bar))
+denom = np.sum((x - x_bar)**2)
+
+b1 = num / denom
+b0 = y_bar - b1 * x_bar</code></pre>
+<h3>Formulas</h3>
+<div class="eq">b1 = Σ[(x − x̄)(y − ȳ)] / Σ[(x − x̄)²]</div>
+<div class="eq">b0 = ȳ − b1x̄</div>
+<table><tr><th>Symbol</th><th>Meaning</th></tr><tr><td>x̄</td><td>Mean of X</td></tr><tr><td>ȳ</td><td>Mean of Y</td></tr><tr><td>b1</td><td>Slope</td></tr><tr><td>b0</td><td>Intercept</td></tr></table>
+<div class="box tip"><b>Exam memory:</b> Calculate <b>b1 first</b>, then use b1 to calculate <b>b0</b>.</div></section>
+
+<section class="sec" id="line" data-group="Simple Linear Regression" data-badge="5"><div class="sec-lead"><span class="num">5</span><h2>Draw the Regression Line</h2></div>
+<pre><code>y_pred = b0 + b1 * df['Mileage']
+
+plt.scatter(x=x, y=y)
+plt.plot(x, y_pred)
+plt.show()</code></pre>
+<p><b>Step-by-step:</b></p><ol><li>Calculate predicted Y using the equation.</li><li>Plot the original X and Y points.</li><li>Plot the predicted values as the regression line.</li></ol>
+<div class="box">The line represents the predicted Premium for different Mileage values.</div></section>
+
+<section class="sec" id="statsmodels" data-group="Simple Linear Regression" data-badge="6"><div class="sec-lead"><span class="num">6</span><h2>Build OLS Using Statsmodels</h2></div>
+<pre><code>import statsmodels.api as sm
+
+x = df['Mileage']
+y = df['Premium']
+
+xc = sm.add_constant(x)
+
+mod = sm.OLS(y, xc)
+ols_mod = mod.fit()
+
+ols_mod.summary()
+ols_mod.params</code></pre>
+<h3>Why <code>add_constant()</code>?</h3><p>It adds the constant/intercept column needed by <code>statsmodels.OLS</code>.</p>
+<div class="box tip"><b>Important:</b> <code>ols_mod.params</code> gives the estimated <b>b0 and b1</b>.</div></section>
+
+<section class="sec" id="interpret" data-group="Simple Linear Regression" data-badge="7"><div class="sec-lead"><span class="num">7</span><h2>Interpret the Regression Equation</h2>
+</div>
+<div class="eq">Premium = b0 + b1 × Mileage</div>
+<p><b>Intercept (b0):</b> predicted Premium when Mileage = 0.</p>
+<p><b>Slope (b1):</b> change in predicted Premium when Mileage increases by 1 unit.</p>
+<div class="box tip"><b>Direction:</b> Positive b1 → Premium increases as Mileage increases. Negative b1 → Premium decreases as Mileage increases.</div>
+<h3>Simple numerical example</h3>
+<div class="answer"><p><b>Given:</b> b0 = 100, b1 = −5, Mileage = 10</p><p><b>Formula:</b> Premium = b0 + b1 × Mileage</p><p><b>Substitution:</b> Premium = 100 + (−5 × 10)</p><p><b>Calculation:</b> Premium = 100 − 50 = <b>50</b></p><p><b>Interpretation:</b> For Mileage = 10, predicted Premium is 50.</p></div></section>
+
+<section class="sec" id="exam" data-group="Exam" data-badge="★"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Answer: Simple Linear Regression</h2></div>
+<div class="answer"><p><b>Definition:</b> Simple Linear Regression predicts a numeric dependent variable using one independent variable.</p>
+<p><b>Model:</b> <code>y = b0 + b1x</code></p>
+<p><b>Steps:</b></p><ol><li>Load and understand the data.</li><li>Choose X and Y.</li><li>Check the relationship using a scatter plot and correlation.</li><li>Use OLS to find the best-fit line.</li><li>Calculate b1 and b0.</li><li>Use the equation to predict Y.</li><li>Build the model using <code>statsmodels.OLS()</code>.</li><li>Interpret b0 and b1.</li></ol>
+<p><b>Conclusion:</b> Linear regression finds the best straight-line relationship between the predictor and target and uses it for prediction.</p></div></section>
+
+<section class="sec" id="quick" data-group="Exam" data-badge="≡"><div class="sec-lead"><span class="num">≡</span><h2>Quick Revision</h2></div>
+<table><tr><th>Remember</th><th>Meaning</th></tr>
+<tr><td>Linear Regression</td><td>Predict a numeric value using a linear relationship.</td></tr>
+<tr><td>X</td><td>Predictor / input.</td></tr>
+<tr><td>Y</td><td>Target / output.</td></tr>
+<tr><td>OLS</td><td>Finds the line with minimum total squared error.</td></tr>
+<tr><td>b1</td><td>Slope.</td></tr>
+<tr><td>b0</td><td>Intercept.</td></tr>
+<tr><td>Equation</td><td>y = b0 + b1x.</td></tr>
+<tr><td>add_constant()</td><td>Adds intercept for statsmodels OLS.</td></tr>
+<tr><td>ols_mod.params</td><td>Returns estimated coefficients.</td></tr></table>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/js/theme.js"></script>
+</body>
+</html>

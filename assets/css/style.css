@@ -98,7 +98,9 @@ pre code.hljs,pre code:not(.hljs){display:block;padding:16px 18px;font-family:"J
 .hljs-title,.hljs-title.function_{color:#6fb3f0}
 .hljs-attr,.hljs-params{color:#c7d2e6}
 .hljs-meta{color:#6d7d9c}
-/* manually-tokenized code (chapters authored without highlight.js) */
+/* fallback for chapters with hand-tokenized code: theme.js runs every
+   pre code through highlight.js and its output wins, but these still
+   color the raw tk- spans if the hljs CDN fails to load (e.g. offline) */
 .tk-com{color:#6d7d9c;font-style:italic}
 .tk-kw{color:#c58cf0}
 .tk-str{color:#8fd18a}
@@ -119,6 +121,12 @@ pre code.hljs,pre code:not(.hljs){display:block;padding:16px 18px;font-family:"J
 .ana{background:var(--ana-bg);border-color:var(--ana-line);color:var(--ana-ink);}
 .ana .ic,.ana .lbl{color:var(--ana-ink);}
 .box code:not(.hljs){background:rgba(125,125,125,.14);border-color:transparent;color:inherit;}
+/* a callout with no color variant (no .trap/.tip/.info/.ana) and no .ic icon */
+.box:not(.trap):not(.tip):not(.info):not(.ana){padding-left:16px;background:var(--surface-2);border-color:var(--line);}
+
+.answer{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:var(--shadow);}
+.answer p:first-child{margin-top:0;}
+.answer p:last-child{margin-bottom:0;}
 
 /* formulas — plain-HTML equation rendering (no MathJax) */
 .eq{font-family:"Newsreader",serif;font-size:19px;text-align:center;margin:20px 0;color:var(--ink);line-height:1.9;overflow-x:auto;}

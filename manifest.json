@@ -7,10 +7,24 @@
     "description": "Every line of the Session 1 notebook, explained mechanically and mapped to the SMLR model paper."
   },
   {
+    "id": "01-simple",
+    "file": "01-preprocessing-simple.html",
+    "title": "Data Preprocessing — Simple",
+    "eyebrow": "ML1 · Session 1 · Simple version",
+    "description": "A shorter, plainer pass over the same Session 1 notebook — code, why it's used, and a ready-to-write exam answer."
+  },
+  {
     "id": "02",
     "file": "02-linear-regression.html",
     "title": "Linear Regression Exam Kit",
     "eyebrow": "Machine Learning · Simple & Multiple Linear Regression",
     "description": "Session 2 explained with analogies and formulas, from the carpremium.csv notebook, mapped to the SMLR model paper."
+  },
+  {
+    "id": "02-simple",
+    "file": "02-linear-regression-simple.html",
+    "title": "Linear Regression — Simple",
+    "eyebrow": "ML1 · Session 2 · Simple version",
+    "description": "A shorter, plainer pass over the same Session 2 notebook — code, why it's used, and a ready-to-write exam answer."
   }
 ]
