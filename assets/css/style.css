@@ -201,11 +201,16 @@ nav a.active .n{color:var(--accent);}
 
 @media (max-width:860px){
   .shell{grid-template-columns:1fr;}
-  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
-  aside nav{columns:2;column-gap:16px;}
-  aside nav a{break-inside:avoid;}
-  main{padding:32px 22px 90px;}
-  .tog{max-width:280px;}
+  aside{
+    position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    padding: 16px 22px;
+  }
+  aside .brand{margin:0;}
+  aside .tog{margin-top:0; max-width:180px; flex:1 1 auto; margin-left: 16px;}
+  aside nav{display:none;}
+  main{padding:24px 16px 90px;}
+  .landing{padding: 32px 20px 80px;}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;}}
 html{scroll-behavior:smooth;}
