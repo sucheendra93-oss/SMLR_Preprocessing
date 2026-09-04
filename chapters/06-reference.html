@@ -57,7 +57,7 @@
   <div class="hero">
     <span class="eyebrow">All Sessions · Quick Lookup</span>
     <h1>Every import, class &amp; method — one page</h1>
-    <p class="lede">Every <code>import</code>, class, and method used across Sessions 1–5 (preprocessing → linear regression → MLR → feature selection → model optimization), each with a one-line summary. Built for the night before the exam — scan, don't read.</p>
+    <p class="lede">Every <code>import</code>, class, and method used across Sessions 1–5 (preprocessing → linear regression → MLR → feature selection → model optimization), each with a one-line summary <em>and</em> a runnable usage example. Built for the night before the exam — scan, don't read.</p>
     <div class="metarow">
       <span class="chip"><b>8</b> libraries</span>
       <span class="chip"><b>25+</b> classes</span>
@@ -110,35 +110,35 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">1</span><h2>pandas <span class="tag">import pandas as pd</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>pd.read_csv(path)</code></td><td>Loads a CSV into a DataFrame.</td></tr>
-          <tr><td><code>df.head()</code></td><td>First 5 rows — sanity-check a load.</td></tr>
-          <tr><td><code>df.shape</code></td><td>(rows, columns) tuple.</td></tr>
-          <tr><td><code>df.info()</code></td><td>Dtypes + non-null counts per column — fastest way to spot missing data.</td></tr>
-          <tr><td><code>df.describe()</code></td><td>count/mean/std/min/quartiles/max for numeric columns only.</td></tr>
-          <tr><td><code>df.describe(include="object")</code></td><td>count/unique/top/freq for categorical columns.</td></tr>
-          <tr><td><code>df.dtypes</code></td><td>Data type of every column.</td></tr>
-          <tr><td><code>df["c"].value_counts()</code></td><td>Frequency of each category in a column.</td></tr>
-          <tr><td><code>df.select_dtypes(include='object' / np.number)</code></td><td>Filters columns by dtype — isolates categorical or numeric columns.</td></tr>
-          <tr><td><code>df.isnull().sum()</code></td><td>Count of missing values per column.</td></tr>
-          <tr><td><code>df.duplicated().sum()</code></td><td>Count of fully duplicated rows.</td></tr>
-          <tr><td><code>df.dropna()</code></td><td>Drops any row containing a null (returns a new frame — must reassign).</td></tr>
-          <tr><td><code>df["c"].fillna(value)</code></td><td>Fills nulls with mean / median / <code>mode()[0]</code> / a constant.</td></tr>
-          <tr><td><code>df.replace(old, new)</code></td><td>Swaps values — used to turn disguised missing markers ("?", "NA", 0) into <code>np.nan</code>.</td></tr>
-          <tr><td><code>pd.to_numeric(s, errors="coerce")</code></td><td>Forces a column to numeric; unparsable values become NaN.</td></tr>
-          <tr><td><code>df.groupby(col)</code></td><td>Groups rows by a column's values, e.g. for group means (domain imputation, target/frequency encoding).</td></tr>
-          <tr><td><code>df["c"].map(dict_or_series)</code></td><td>Translates each value through a mapping — used for frequency/target encoding and code→label lookups.</td></tr>
-          <tr><td><code>df["c"].apply(func)</code></td><td>Runs a function on every value — e.g. slicing a string.</td></tr>
-          <tr><td><code>pd.get_dummies(df, columns, drop_first)</code></td><td>One-hot encodes columns; <code>drop_first=True</code> gives k−1 dummies (avoids the dummy trap).</td></tr>
-          <tr><td><code>pd.concat([a, b], axis=1)</code></td><td>Joins DataFrames/Series side by side (columns) or stacked (rows, axis=0).</td></tr>
-          <tr><td><code>df.corr(numeric_only=True)</code></td><td>Pairwise Pearson correlation matrix.</td></tr>
-          <tr><td><code>df.quantile(q)</code></td><td>The q-th quantile per column — used for Q1/Q3 in IQR outlier detection.</td></tr>
-          <tr><td><code>df.skew()</code></td><td>Skewness of a distribution: &gt;0 right-skew, &lt;0 left-skew, ≈0 symmetric.</td></tr>
-          <tr><td><code>df.boxplot()</code></td><td>Quick boxplot of every numeric column (pandas' built-in, no seaborn needed).</td></tr>
-          <tr><td><code>df.std()</code></td><td>Standard deviation per column — used to spot near-zero-variance (useless) columns.</td></tr>
-          <tr><td><code>df.loc[row, col]</code></td><td>Label-based access — read/write a specific cell (used in conditional/domain imputation).</td></tr>
-          <tr><td><code>pd.options.display.max_columns = None</code></td><td>Session-wide setting so wide DataFrames never truncate columns with "...".</td></tr>
+          <tr><td><code>pd.read_csv(path)</code></td><td>Loads a CSV into a DataFrame.</td><td><code>df = pd.read_csv("bigmartsales.csv")</code></td></tr>
+          <tr><td><code>df.head()</code></td><td>First 5 rows — sanity-check a load.</td><td><code>df.head()</code></td></tr>
+          <tr><td><code>df.shape</code></td><td>(rows, columns) tuple.</td><td><code>df.shape   # (8523, 12)</code></td></tr>
+          <tr><td><code>df.info()</code></td><td>Dtypes + non-null counts per column — fastest way to spot missing data.</td><td><code>df.info()</code></td></tr>
+          <tr><td><code>df.describe()</code></td><td>count/mean/std/min/quartiles/max for numeric columns only.</td><td><code>df.describe()</code></td></tr>
+          <tr><td><code>df.describe(include="object")</code></td><td>count/unique/top/freq for categorical columns.</td><td><code>df.describe(include="object")</code></td></tr>
+          <tr><td><code>df.dtypes</code></td><td>Data type of every column.</td><td><code>df.dtypes</code></td></tr>
+          <tr><td><code>df["c"].value_counts()</code></td><td>Frequency of each category in a column.</td><td><code>df["Outlet_Size"].value_counts()</code></td></tr>
+          <tr><td><code>df.select_dtypes(include='object' / np.number)</code></td><td>Filters columns by dtype — isolates categorical or numeric columns.</td><td><code>num_cols = df.select_dtypes(include=np.number).columns</code></td></tr>
+          <tr><td><code>df.isnull().sum()</code></td><td>Count of missing values per column.</td><td><code>df.isnull().sum().sort_values(ascending=False)</code></td></tr>
+          <tr><td><code>df.duplicated().sum()</code></td><td>Count of fully duplicated rows.</td><td><code>df.duplicated().sum()</code></td></tr>
+          <tr><td><code>df.dropna()</code></td><td>Drops any row containing a null (returns a new frame — must reassign).</td><td><code>df = df.dropna()</code></td></tr>
+          <tr><td><code>df["c"].fillna(value)</code></td><td>Fills nulls with mean / median / <code>mode()[0]</code> / a constant.</td><td><code>df["Item_Weight"] = df["Item_Weight"].fillna(df["Item_Weight"].mean())</code></td></tr>
+          <tr><td><code>df.replace(old, new)</code></td><td>Swaps values — used to turn disguised missing markers ("?", "NA", 0) into <code>np.nan</code>.</td><td><code>df["Outlet_Size"] = df["Outlet_Size"].replace(np.nan, "Medium")</code></td></tr>
+          <tr><td><code>pd.to_numeric(s, errors="coerce")</code></td><td>Forces a column to numeric; unparsable values become NaN.</td><td><code>df["Age"] = pd.to_numeric(df["Age"], errors="coerce")</code></td></tr>
+          <tr><td><code>df.groupby(col)</code></td><td>Groups rows by a column's values, e.g. for group means (domain imputation, target/frequency encoding).</td><td><code>df.groupby("Outlet_Location_Type")["Item_Outlet_Sales"].mean()</code></td></tr>
+          <tr><td><code>df["c"].map(dict_or_series)</code></td><td>Translates each value through a mapping — used for frequency/target encoding and code→label lookups.</td><td><code>df["Product_type"] = df["Product_type"].map({"FD":"Food","DR":"Drinks"})</code></td></tr>
+          <tr><td><code>df["c"].apply(func)</code></td><td>Runs a function on every value — e.g. slicing a string.</td><td><code>df["Product_type"] = df["Item_Identifier"].apply(lambda x: x[0:2])</code></td></tr>
+          <tr><td><code>pd.get_dummies(df, columns, drop_first)</code></td><td>One-hot encodes columns; <code>drop_first=True</code> gives k−1 dummies (avoids the dummy trap).</td><td><code>df = pd.get_dummies(df, columns=["Item_Type"], drop_first=True)</code></td></tr>
+          <tr><td><code>pd.concat([a, b], axis=1)</code></td><td>Joins DataFrames/Series side by side (columns) or stacked (rows, axis=0).</td><td><code>pd.concat([df.drop(columns="Outlet_Type"), df_encoded], axis=1)</code></td></tr>
+          <tr><td><code>df.corr(numeric_only=True)</code></td><td>Pairwise Pearson correlation matrix.</td><td><code>df.corr(numeric_only=True)["Price"].sort_values()</code></td></tr>
+          <tr><td><code>df.quantile(q)</code></td><td>The q-th quantile per column — used for Q1/Q3 in IQR outlier detection.</td><td><code>Q1, Q3 = df["Area"].quantile(.25), df["Area"].quantile(.75)</code></td></tr>
+          <tr><td><code>df.skew()</code></td><td>Skewness of a distribution: &gt;0 right-skew, &lt;0 left-skew, ≈0 symmetric.</td><td><code>df["Item_Outlet_Sales"].skew()</code></td></tr>
+          <tr><td><code>df.boxplot()</code></td><td>Quick boxplot of every numeric column (pandas' built-in, no seaborn needed).</td><td><code>df.drop(["TAX","B"], axis=1).boxplot()</code></td></tr>
+          <tr><td><code>df.std()</code></td><td>Standard deviation per column — used to spot near-zero-variance (useless) columns.</td><td><code>df.std()   # 'lights' ≈ 0 → drop it</code></td></tr>
+          <tr><td><code>df.loc[row, col]</code></td><td>Label-based access — read/write a specific cell (used in conditional/domain imputation).</td><td><code>df.loc[ind, "Outlet_Location_Type"] = "Tier1"</code></td></tr>
+          <tr><td><code>pd.options.display.max_columns = None</code></td><td>Session-wide setting so wide DataFrames never truncate columns with "...".</td><td><code>pd.options.display.max_columns = None</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -149,15 +149,15 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">2</span><h2>numpy <span class="tag">import numpy as np</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>np.nan</code></td><td>The canonical "missing value" marker pandas/numpy recognise.</td></tr>
-          <tr><td><code>np.number</code></td><td>Dtype filter passed to <code>select_dtypes</code> to grab numeric columns.</td></tr>
-          <tr><td><code>np.where(condition)</code></td><td>Returns the positional indexes where a condition is True (used to locate rows to fix).</td></tr>
-          <tr><td><code>np.log(x)</code> / <code>np.log1p(x)</code></td><td>Natural log transform to fix right-skew; <code>log1p</code> = log(1+x), safe when x has zeros.</td></tr>
-          <tr><td><code>np.exp(x)</code> / <code>np.expm1(x)</code></td><td>Inverse of log/log1p — converts log-scale predictions back to real units.</td></tr>
-          <tr><td><code>np.sqrt(x)</code></td><td>Square root — a gentler skew-reducing transform than log; handles zeros.</td></tr>
-          <tr><td><code>np.mean(x)</code> / <code>np.sum(x)</code></td><td>Basic aggregates, used when computing OLS coefficients "by hand".</td></tr>
+          <tr><td><code>np.nan</code></td><td>The canonical "missing value" marker pandas/numpy recognise.</td><td><code>df.replace("?", np.nan)</code></td></tr>
+          <tr><td><code>np.number</code></td><td>Dtype filter passed to <code>select_dtypes</code> to grab numeric columns.</td><td><code>df.select_dtypes(include=np.number)</code></td></tr>
+          <tr><td><code>np.where(condition)</code></td><td>Returns the positional indexes where a condition is True (used to locate rows to fix).</td><td><code>idx = np.where(df["Outlet_Location_Type"].isnull())[0]</code></td></tr>
+          <tr><td><code>np.log(x)</code> / <code>np.log1p(x)</code></td><td>Natural log transform to fix right-skew; <code>log1p</code> = log(1+x), safe when x has zeros.</td><td><code>df["log_sales"] = np.log(df["Item_Outlet_Sales"])</code></td></tr>
+          <tr><td><code>np.exp(x)</code> / <code>np.expm1(x)</code></td><td>Inverse of log/log1p — converts log-scale predictions back to real units.</td><td><code>np.exp(model_on_log_y.fittedvalues[0:5])</code></td></tr>
+          <tr><td><code>np.sqrt(x)</code></td><td>Square root — a gentler skew-reducing transform than log; handles zeros.</td><td><code>rmse = np.sqrt(mean_squared_error(y_test, y_pred))</code></td></tr>
+          <tr><td><code>np.mean(x)</code> / <code>np.sum(x)</code></td><td>Basic aggregates, used when computing OLS coefficients "by hand".</td><td><code>b1 = np.sum((x-x.mean())*(y-y.mean())) / np.sum((x-x.mean())**2)</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -168,17 +168,17 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">3</span><h2>seaborn &amp; matplotlib <span class="tag">import seaborn as sns / matplotlib.pyplot as plt</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>sns.histplot(x, kde=True)</code></td><td>Histogram with a smoothed density curve — checks skew/shape of a distribution.</td></tr>
-          <tr><td><code>sns.boxplot(x, whis=1.5)</code></td><td>Box = IQR, whiskers = 1.5×IQR, points beyond = outliers.</td></tr>
-          <tr><td><code>sns.scatterplot(x, y)</code></td><td>Bivariate scatter — spot trends and bivariate outliers.</td></tr>
-          <tr><td><code>sns.heatmap(matrix, annot=True)</code></td><td>Colour-coded grid — used for missing-value maps and correlation heatmaps.</td></tr>
-          <tr><td><code>sns.barplot(x, y, data)</code></td><td>Bar chart — used here to visualise model coefficients (regularization shrinkage).</td></tr>
-          <tr><td><code>plt.scatter(x, y)</code> / <code>plt.plot(x, y)</code></td><td>Raw matplotlib scatter / line — e.g. drawing the fitted regression line over the data.</td></tr>
-          <tr><td><code>plt.subplots(r, c)</code> / <code>plt.subplot(r,c,i)</code></td><td>Creates a grid of axes for multiple plots side by side.</td></tr>
-          <tr><td><code>plt.axhline(0)</code></td><td>Horizontal reference line at 0 — the "no error" line on a residual plot.</td></tr>
-          <tr><td><code>plt.rcParams["figure.figsize"]</code></td><td>Session-wide default plot size.</td></tr>
+          <tr><td><code>sns.histplot(x, kde=True)</code></td><td>Histogram with a smoothed density curve — checks skew/shape of a distribution.</td><td><code>sns.histplot(df["Item_Visibility"], kde=True)</code></td></tr>
+          <tr><td><code>sns.boxplot(x, whis=1.5)</code></td><td>Box = IQR, whiskers = 1.5×IQR, points beyond = outliers.</td><td><code>sns.boxplot(x=df["Profit"], orient="h", whis=1.5)</code></td></tr>
+          <tr><td><code>sns.scatterplot(x, y)</code></td><td>Bivariate scatter — spot trends and bivariate outliers.</td><td><code>sns.scatterplot(x=df["Mileage"], y=df["Premium"])</code></td></tr>
+          <tr><td><code>sns.heatmap(matrix, annot=True)</code></td><td>Colour-coded grid — used for missing-value maps and correlation heatmaps.</td><td><code>sns.heatmap(df.corr(), annot=True, vmin=-1, vmax=1)</code></td></tr>
+          <tr><td><code>sns.barplot(x, y, data)</code></td><td>Bar chart — used here to visualise model coefficients (regularization shrinkage).</td><td><code>sns.barplot(x="Coefficient", y="Variable", data=df_coeff)</code></td></tr>
+          <tr><td><code>plt.scatter(x, y)</code> / <code>plt.plot(x, y)</code></td><td>Raw matplotlib scatter / line — e.g. drawing the fitted regression line over the data.</td><td><code>plt.scatter(x, y); plt.plot(x, y_pred)</code></td></tr>
+          <tr><td><code>plt.subplots(r, c)</code> / <code>plt.subplot(r,c,i)</code></td><td>Creates a grid of axes for multiple plots side by side.</td><td><code>fig, ax = plt.subplots(2, 3, figsize=(15, 8))</code></td></tr>
+          <tr><td><code>plt.axhline(0)</code></td><td>Horizontal reference line at 0 — the "no error" line on a residual plot.</td><td><code>plt.scatter(model.predict(X_test), resid); plt.axhline(0, ls="--")</code></td></tr>
+          <tr><td><code>plt.rcParams["figure.figsize"]</code></td><td>Session-wide default plot size.</td><td><code>plt.rcParams["figure.figsize"] = [15, 5]</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -189,11 +189,11 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">4</span><h2>scipy.stats <span class="tag">from scipy import stats</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>stats.zscore(series)</code></td><td>Converts a column to z-scores; <code>|z| &gt; 3</code> flags an outlier.</td></tr>
-          <tr><td><code>stats.boxcox(x)</code></td><td>Box-Cox transform — auto-picks the power λ that best normalises x (needs strictly positive data). Returns <code>(transformed, lambda)</code>.</td></tr>
-          <tr><td><code>shapiro(x)</code></td><td>Shapiro-Wilk normality test on residuals. H₀ = data is normal; <code>p &gt; 0.05</code> → normal.</td></tr>
+          <tr><td><code>stats.zscore(series)</code></td><td>Converts a column to z-scores; <code>|z| &gt; 3</code> flags an outlier.</td><td><code>z = stats.zscore(df["Profit"]); df_clean = df[abs(z) <= 3]</code></td></tr>
+          <tr><td><code>stats.boxcox(x)</code></td><td>Box-Cox transform — auto-picks the power λ that best normalises x (needs strictly positive data). Returns <code>(transformed, lambda)</code>.</td><td><code>boxcox_tr = stats.boxcox(df["my_data"])[0]</code></td></tr>
+          <tr><td><code>shapiro(x)</code></td><td>Shapiro-Wilk normality test on residuals. H₀ = data is normal; <code>p &gt; 0.05</code> → normal.</td><td><code>stat, p_value = shapiro(model.resid)</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -204,13 +204,16 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">5</span><h2>sklearn.preprocessing <span class="tag">encoders &amp; scalers</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Class</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Class</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>OneHotEncoder()</code></td><td>Makes one 0/1 column per category. Returns a <b>sparse</b> matrix by default → <code>.toarray()</code> or <code>sparse_output=False</code>. Use when you need to persist/reuse the fitted encoding.</td></tr>
-          <tr><td><code>LabelEncoder()</code></td><td>Assigns integers <b>alphabetically</b> to categories — arbitrary order. Safe only for the <b>target</b> variable or genuinely ordinal features.</td></tr>
-          <tr><td><code>OrdinalEncoder(categories=[[...]])</code></td><td>You supply the true category order, so the resulting integers carry meaning (Small&lt;Medium&lt;High).</td></tr>
-          <tr><td><code>StandardScaler()</code></td><td>z-score scaling: <code>(x−mean)/std</code> → mean 0, std 1, unbounded. Keeps outlier impact. Needed before Ridge/Lasso.</td></tr>
-          <tr><td><code>MinMaxScaler()</code></td><td>Normalisation: <code>(x−min)/(max−min)</code> → fixed [0,1] range. Very sensitive to outliers.</td></tr>
+          <tr><td><code>OneHotEncoder()</code></td><td>Makes one 0/1 column per category. Returns a <b>sparse</b> matrix by default → <code>.toarray()</code> or <code>sparse_output=False</code>. Use when you need to persist/reuse the fitted encoding.</td><td><pre><code class="language-python">enc = OneHotEncoder(sparse_output=False, drop="first")
+df_enc = enc.fit_transform(df[["Outlet_Type"]])</code></pre></td></tr>
+          <tr><td><code>LabelEncoder()</code></td><td>Assigns integers <b>alphabetically</b> to categories — arbitrary order. Safe only for the <b>target</b> variable or genuinely ordinal features.</td><td><code>df["y_enc"] = LabelEncoder().fit_transform(df["Outlet_Size"])</code></td></tr>
+          <tr><td><code>OrdinalEncoder(categories=[[...]])</code></td><td>You supply the true category order, so the resulting integers carry meaning (Small&lt;Medium&lt;High).</td><td><code>OrdinalEncoder(categories=[["Small","Medium","High"]]).fit_transform(df[["Outlet_Size"]])</code></td></tr>
+          <tr><td><code>StandardScaler()</code></td><td>z-score scaling: <code>(x−mean)/std</code> → mean 0, std 1, unbounded. Keeps outlier impact. Needed before Ridge/Lasso.</td><td><pre><code class="language-python">scaler = StandardScaler()
+X_train[cols] = scaler.fit_transform(X_train[cols])
+X_test[cols]  = scaler.transform(X_test[cols])</code></pre></td></tr>
+          <tr><td><code>MinMaxScaler()</code></td><td>Normalisation: <code>(x−min)/(max−min)</code> → fixed [0,1] range. Very sensitive to outliers.</td><td><code>df["mm_sales"] = MinMaxScaler().fit_transform(df[["Item_Outlet_Sales"]])</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -222,13 +225,16 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">6</span><h2>sklearn.model_selection <span class="tag">splitting, CV, tuning</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Class / function</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Class / function</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>train_test_split(X, y, test_size, random_state)</code></td><td>Splits into train/test sets; <code>random_state</code> fixes the shuffle for reproducibility.</td></tr>
-          <tr><td><code>cross_val_score(estimator, X, y, cv, scoring)</code></td><td>Runs k-fold CV, returns one score per fold (e.g. R²) — average for an honest, less-lucky performance estimate.</td></tr>
-          <tr><td><code>LeaveOneOut()</code></td><td>CV splitter where k = n rows — each fold tests on exactly one row. Thorough but slow; only for small data.</td></tr>
-          <tr><td><code>GridSearchCV(estimator, param_grid, cv)</code></td><td>Exhaustively tries every hyperparameter combination with CV; <code>.best_params_</code> / <code>.best_estimator_</code> give the winner. Thorough but slow on big grids.</td></tr>
-          <tr><td><code>RandomizedSearchCV(estimator, param_distributions, cv, n_iter)</code></td><td>Tries <code>n_iter</code> random hyperparameter combinations instead of all — faster, usually lands close to optimal.</td></tr>
+          <tr><td><code>train_test_split(X, y, test_size, random_state)</code></td><td>Splits into train/test sets; <code>random_state</code> fixes the shuffle for reproducibility.</td><td><code>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=100)</code></td></tr>
+          <tr><td><code>cross_val_score(estimator, X, y, cv, scoring)</code></td><td>Runs k-fold CV, returns one score per fold (e.g. R²) — average for an honest, less-lucky performance estimate.</td><td><code>scores = cross_val_score(LinearRegression(), X_train, y_train, cv=5, scoring="r2")</code></td></tr>
+          <tr><td><code>LeaveOneOut()</code></td><td>CV splitter where k = n rows — each fold tests on exactly one row. Thorough but slow; only for small data.</td><td><pre><code class="language-python">for tr_idx, te_idx in LeaveOneOut().split(X_train):
+    X_tr, X_te = X_train.iloc[tr_idx], X_train.iloc[te_idx]</code></pre></td></tr>
+          <tr><td><code>GridSearchCV(estimator, param_grid, cv)</code></td><td>Exhaustively tries every hyperparameter combination with CV; <code>.best_params_</code> / <code>.best_estimator_</code> give the winner. Thorough but slow on big grids.</td><td><pre><code class="language-python">grid = GridSearchCV(Ridge(), {"alpha": [0.01, 0.1, 1, 10]}, cv=3)
+grid.fit(X_train, y_train)
+grid.best_params_</code></pre></td></tr>
+          <tr><td><code>RandomizedSearchCV(estimator, param_distributions, cv, n_iter)</code></td><td>Tries <code>n_iter</code> random hyperparameter combinations instead of all — faster, usually lands close to optimal.</td><td><code>RandomizedSearchCV(Ridge(), {"alpha":[1e-3,0.1,1,10,100]}, cv=3, n_iter=10).fit(X_train, y_train)</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -239,13 +245,13 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">7</span><h2>sklearn.linear_model <span class="tag">regression models</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Class</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Class</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>LinearRegression()</code></td><td>Plain OLS regression. Adds its own intercept automatically — never call <code>add_constant</code> with it.</td></tr>
-          <tr><td><code>SGDRegressor()</code></td><td>Linear regression fit by (stochastic) gradient descent instead of the closed-form OLS solution — used for very large data; has mild built-in regularization.</td></tr>
-          <tr><td><code>Ridge(alpha)</code></td><td>L2-regularized regression — penalty Σβ². Shrinks all coefficients towards 0 but never exactly to 0.</td></tr>
-          <tr><td><code>Lasso(alpha)</code></td><td>L1-regularized regression — penalty Σ|β|. Can drive weak coefficients to exactly 0 → built-in feature selection.</td></tr>
-          <tr><td><code>ElasticNet(alpha, l1_ratio)</code></td><td>Combines L1+L2. <code>l1_ratio=0</code> → pure Ridge, <code>=1</code> → pure Lasso, between → a blend.</td></tr>
+          <tr><td><code>LinearRegression()</code></td><td>Plain OLS regression. Adds its own intercept automatically — never call <code>add_constant</code> with it.</td><td><code>model = LinearRegression().fit(X_train, y_train); model.predict(X_test)</code></td></tr>
+          <tr><td><code>SGDRegressor()</code></td><td>Linear regression fit by (stochastic) gradient descent instead of the closed-form OLS solution — used for very large data; has mild built-in regularization.</td><td><code>sgd = SGDRegressor(random_state=0).fit(X_train, y_train)</code></td></tr>
+          <tr><td><code>Ridge(alpha)</code></td><td>L2-regularized regression — penalty Σβ². Shrinks all coefficients towards 0 but never exactly to 0.</td><td><code>ridge = Ridge(alpha=1).fit(X_train, y_train)</code></td></tr>
+          <tr><td><code>Lasso(alpha)</code></td><td>L1-regularized regression — penalty Σ|β|. Can drive weak coefficients to exactly 0 → built-in feature selection.</td><td><code>lasso = Lasso(alpha=0.5).fit(X_train, y_train)</code></td></tr>
+          <tr><td><code>ElasticNet(alpha, l1_ratio)</code></td><td>Combines L1+L2. <code>l1_ratio=0</code> → pure Ridge, <code>=1</code> → pure Lasso, between → a blend.</td><td><code>enet = ElasticNet(alpha=0.1, l1_ratio=0.01).fit(X_train, y_train)</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -257,10 +263,13 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">8</span><h2>Feature selection <span class="tag">RFE · SequentialFeatureSelector</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Class</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Class</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>RFE(estimator, n_features_to_select)</code></td><td>Recursive Feature Elimination — fits the model, ranks features by importance, drops the weakest, repeats. <code>.ranking_</code> gives each feature's rank (1 = keep); an instance of backward elimination.</td></tr>
-          <tr><td><code>sfs(estimator, k_features, forward, scoring)</code></td><td>mlxtend's <code>SequentialFeatureSelector</code>. <code>forward=True</code> = forward selection (start empty, add best feature each step); <code>forward=False</code> = backward elimination (start full, drop weakest). <code>k_features</code>: an int, a range <code>(lo,hi)</code>, or <code>'best'</code>.</td></tr>
+          <tr><td><code>RFE(estimator, n_features_to_select)</code></td><td>Recursive Feature Elimination — fits the model, ranks features by importance, drops the weakest, repeats. <code>.ranking_</code> gives each feature's rank (1 = keep); an instance of backward elimination.</td><td><pre><code class="language-python">rfe = RFE(LinearRegression(), n_features_to_select=5).fit(X_train, y_train)
+X_train.columns[rfe.support_]</code></pre></td></tr>
+          <tr><td><code>sfs(estimator, k_features, forward, scoring)</code></td><td>mlxtend's <code>SequentialFeatureSelector</code>. <code>forward=True</code> = forward selection (start empty, add best feature each step); <code>forward=False</code> = backward elimination (start full, drop weakest). <code>k_features</code>: an int, a range <code>(lo,hi)</code>, or <code>'best'</code>.</td><td><pre><code class="language-python">sfs_fwd = sfs(LinearRegression(), k_features=6, forward=True, scoring="r2")
+sfs_fwd = sfs_fwd.fit(X_train, y_train)
+sfs_fwd.k_feature_names_</code></pre></td></tr>
         </tbody>
       </table>
     </div>
@@ -272,12 +281,12 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">9</span><h2>sklearn.metrics <span class="tag">error &amp; fit metrics</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Function</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Function</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>mean_absolute_error(y_true, y_pred)</code></td><td>MAE — average of |errors|, same units as target, robust to outliers.</td></tr>
-          <tr><td><code>mean_squared_error(y_true, y_pred)</code></td><td>MSE — average of squared errors; take <code>np.sqrt()</code> for RMSE, which punishes big misses more.</td></tr>
-          <tr><td><code>mean_absolute_percentage_error(y_true, y_pred)</code></td><td>MAPE — average error as a fraction of the true value; ×100 to read as a percentage.</td></tr>
-          <tr><td><code>r2_score(y_true, y_pred)</code></td><td>R² computed from explicit predictions (vs. <code>model.score()</code> which does the same thing on a fitted estimator).</td></tr>
+          <tr><td><code>mean_absolute_error(y_true, y_pred)</code></td><td>MAE — average of |errors|, same units as target, robust to outliers.</td><td><code>mae = mean_absolute_error(y_test, y_pred)</code></td></tr>
+          <tr><td><code>mean_squared_error(y_true, y_pred)</code></td><td>MSE — average of squared errors; take <code>np.sqrt()</code> for RMSE, which punishes big misses more.</td><td><code>rmse = np.sqrt(mean_squared_error(y_test, y_pred))</code></td></tr>
+          <tr><td><code>mean_absolute_percentage_error(y_true, y_pred)</code></td><td>MAPE — average error as a fraction of the true value; ×100 to read as a percentage.</td><td><code>mape = mean_absolute_percentage_error(y_test, y_pred) * 100</code></td></tr>
+          <tr><td><code>r2_score(y_true, y_pred)</code></td><td>R² computed from explicit predictions (vs. <code>model.score()</code> which does the same thing on a fitted estimator).</td><td><code>r2 = r2_score(y_test, y_pred)</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -288,21 +297,21 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">10</span><h2>statsmodels <span class="tag">import statsmodels.api as sm</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>sm.add_constant(X)</code></td><td>Adds a column of 1s so OLS can estimate the intercept b0. <b>Required</b> for statsmodels — it does NOT add one for you (unlike sklearn's LinearRegression).</td></tr>
-          <tr><td><code>sm.OLS(y, X).fit()</code></td><td>Fits ordinary least squares; returns a results object with everything below.</td></tr>
-          <tr><td><code>model.summary()</code></td><td>The full stats report: coefficients, std errors, t-stats, p-values, R², Adj R², F-statistic, Durbin-Watson, Jarque-Bera.</td></tr>
-          <tr><td><code>model.params</code></td><td>Fitted coefficients (β₀, β₁, …) as a Series.</td></tr>
-          <tr><td><code>model.pvalues</code></td><td>p-value per coefficient — &gt;0.05 means that feature is statistically insignificant (a backward-elimination drop candidate).</td></tr>
-          <tr><td><code>model.rsquared</code> / <code>model.rsquared_adj</code></td><td>R² and Adjusted R² of the fitted model.</td></tr>
-          <tr><td><code>model.fvalue</code> / <code>model.f_pvalue</code></td><td>The F-statistic and its p-value — tests whether the whole model (not just one coefficient) is significant.</td></tr>
-          <tr><td><code>model.resid</code></td><td>Residuals (actual − predicted) for every training row — feeds every assumption check.</td></tr>
-          <tr><td><code>model.fittedvalues</code></td><td>The model's predicted values on the data it was fit on.</td></tr>
-          <tr><td><code>qqplot(resid, line='s')</code></td><td>Q-Q plot of residuals — points on the 45° line ⇒ residuals are normally distributed.</td></tr>
-          <tr><td><code>sms.het_breuschpagan(resid, X)</code></td><td>Breusch-Pagan test for homoscedasticity. H₀ = constant variance; <code>p &gt; 0.05</code> → homoscedastic (good).</td></tr>
-          <tr><td><code>het_goldfeldquandt(resid, X)</code></td><td>Alternative homoscedasticity test — same H₀/decision rule as Breusch-Pagan.</td></tr>
-          <tr><td><code>variance_inflation_factor(X.values, i)</code></td><td>VIF for column i — <code>1/(1−R²)</code> of that feature regressed on the rest. VIF&gt;5 ⇒ high multicollinearity, drop it.</td></tr>
+          <tr><td><code>sm.add_constant(X)</code></td><td>Adds a column of 1s so OLS can estimate the intercept b0. <b>Required</b> for statsmodels — it does NOT add one for you (unlike sklearn's LinearRegression).</td><td><code>Xc = sm.add_constant(X_train)</code></td></tr>
+          <tr><td><code>sm.OLS(y, X).fit()</code></td><td>Fits ordinary least squares; returns a results object with everything below.</td><td><code>model = sm.OLS(y_train, Xc).fit()</code></td></tr>
+          <tr><td><code>model.summary()</code></td><td>The full stats report: coefficients, std errors, t-stats, p-values, R², Adj R², F-statistic, Durbin-Watson, Jarque-Bera.</td><td><code>print(model.summary())</code></td></tr>
+          <tr><td><code>model.params</code></td><td>Fitted coefficients (β₀, β₁, …) as a Series.</td><td><code>model.params   # const 327.086, Mileage -11.6905</code></td></tr>
+          <tr><td><code>model.pvalues</code></td><td>p-value per coefficient — &gt;0.05 means that feature is statistically insignificant (a backward-elimination drop candidate).</td><td><code>model.pvalues.sort_values(ascending=False)</code></td></tr>
+          <tr><td><code>model.rsquared</code> / <code>model.rsquared_adj</code></td><td>R² and Adjusted R² of the fitted model.</td><td><code>model.rsquared, model.rsquared_adj</code></td></tr>
+          <tr><td><code>model.fvalue</code> / <code>model.f_pvalue</code></td><td>The F-statistic and its p-value — tests whether the whole model (not just one coefficient) is significant.</td><td><code>model.fvalue, model.f_pvalue</code></td></tr>
+          <tr><td><code>model.resid</code></td><td>Residuals (actual − predicted) for every training row — feeds every assumption check.</td><td><code>sns.histplot(model.resid, kde=True)</code></td></tr>
+          <tr><td><code>model.fittedvalues</code></td><td>The model's predicted values on the data it was fit on.</td><td><code>y_pred = model.fittedvalues</code></td></tr>
+          <tr><td><code>qqplot(resid, line='s')</code></td><td>Q-Q plot of residuals — points on the 45° line ⇒ residuals are normally distributed.</td><td><code>qqplot(model.resid, line="s")</code></td></tr>
+          <tr><td><code>sms.het_breuschpagan(resid, X)</code></td><td>Breusch-Pagan test for homoscedasticity. H₀ = constant variance; <code>p &gt; 0.05</code> → homoscedastic (good).</td><td><code>bp = sms.het_breuschpagan(model.resid, X_train)</code></td></tr>
+          <tr><td><code>het_goldfeldquandt(resid, X)</code></td><td>Alternative homoscedasticity test — same H₀/decision rule as Breusch-Pagan.</td><td><code>stat, p_value, _ = het_goldfeldquandt(model.resid, X_train)</code></td></tr>
+          <tr><td><code>variance_inflation_factor(X.values, i)</code></td><td>VIF for column i — <code>1/(1−R²)</code> of that feature regressed on the rest. VIF&gt;5 ⇒ high multicollinearity, drop it.</td><td><code>[variance_inflation_factor(X.values, i) for i in range(X.shape[1])]</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -314,16 +323,23 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">11</span><h2>optuna <span class="tag">Bayesian hyperparameter search</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>optuna.create_study(direction, sampler)</code></td><td>Starts a tuning study; <code>direction='minimize'</code> for an error metric like RMSE. <code>TPESampler(seed=...)</code> makes it reproducible.</td></tr>
-          <tr><td><code>study.optimize(objective, n_trials)</code></td><td>Runs the search: each trial calls your <code>objective(trial)</code> function, which builds a model and returns the score to minimise/maximise.</td></tr>
-          <tr><td><code>trial.suggest_float(name, low, high)</code></td><td>Inside <code>objective</code> — asks Optuna to propose a value for one hyperparameter in a given range.</td></tr>
-          <tr><td><code>study.best_trial.value / .params</code></td><td>The best score found and the hyperparameters that produced it.</td></tr>
+          <tr><td><code>optuna.create_study(direction, sampler)</code></td><td>Starts a tuning study; <code>direction='minimize'</code> for an error metric like RMSE. <code>TPESampler(seed=...)</code> makes it reproducible.</td><td><code>study = optuna.create_study(direction="minimize", sampler=TPESampler(seed=10))</code></td></tr>
+          <tr><td><code>study.optimize(objective, n_trials)</code></td><td>Runs the search: each trial calls your <code>objective(trial)</code> function, which builds a model and returns the score to minimise/maximise.</td><td><code>study.optimize(objective, n_trials=100)</code></td></tr>
+          <tr><td><code>trial.suggest_float(name, low, high)</code></td><td>Inside <code>objective</code> — asks Optuna to propose a value for one hyperparameter in a given range.</td><td><code>alpha = trial.suggest_float("alpha", 0.0001, 10)</code></td></tr>
+          <tr><td><code>study.best_trial.value / .params</code></td><td>The best score found and the hyperparameters that produced it.</td><td><code>study.best_trial.value, study.best_trial.params</code></td></tr>
         </tbody>
       </table>
     </div>
-    <div class="box tip"><span class="ic">✓</span><b class="lbl">vs. Grid/Randomized search</b>Optuna is <b>Bayesian</b> — each trial learns from the previous ones and steers toward promising regions, so it needs far fewer trials than an exhaustive grid.</div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">Full worked example</b><pre><code class="language-python">def objective(trial):
+    params = {"alpha": trial.suggest_float("alpha", 0.0001, 10)}
+    ridge = Ridge(**params).fit(X_train, y_train)
+    return get_test_rmse(ridge)          # lower RMSE = better
+
+study = optuna.create_study(direction="minimize", sampler=TPESampler(seed=10))
+study.optimize(objective, n_trials=100)
+ridge_best = Ridge(**study.best_trial.params).fit(X_train, y_train)</code></pre></div>
   </section>
 
   <!-- ============ MISC ============ -->
@@ -331,10 +347,10 @@ from optuna.samplers import TPESampler</code></pre>
     <div class="sec-lead"><span class="num">12</span><h2>Misc <span class="tag">datetime · warnings</span></h2></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Call</th><th>Summary</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td><code>date.today().year</code></td><td>Current year, from <code>datetime.date</code> — used to engineer an "age" feature from a year column (not reproducible across years, an exam trap).</td></tr>
-          <tr><td><code>filterwarnings('ignore')</code></td><td>Silences library warning spam in notebook output (from <code>warnings</code>).</td></tr>
+          <tr><td><code>date.today().year</code></td><td>Current year, from <code>datetime.date</code> — used to engineer an "age" feature from a year column (not reproducible across years, an exam trap).</td><td><code>df["Age_Outlet"] = date.today().year - df["Outlet_Establishment_Year"]</code></td></tr>
+          <tr><td><code>filterwarnings('ignore')</code></td><td>Silences library warning spam in notebook output (from <code>warnings</code>).</td><td><code>from warnings import filterwarnings; filterwarnings("ignore")</code></td></tr>
         </tbody>
       </table>
     </div>
