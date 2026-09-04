@@ -1,0 +1,289 @@
+  <div class="hero">
+    <span class="eyebrow">All Sessions · Quick Lookup</span>
+    <h1>Every import, class &amp; method — one page</h1>
+    <p class="lede">Every <code>import</code>, class, and method used across Sessions 1–5 (preprocessing → linear regression → MLR → feature selection → model optimization), each with a one-line summary. Built for the night before the exam — scan, don't read.</p>
+    <div class="metarow">
+      <span class="chip"><b>8</b> libraries</span>
+      <span class="chip"><b>25+</b> classes</span>
+      <span class="chip"><b>70+</b> methods/functions</span>
+      <span class="chip">source: <b>Ch 1–5</b></span>
+    </div>
+  </div>
+
+  <!-- ============ IMPORTS ============ -->
+  <section class="sec" id="imports" data-group="Imports" data-badge="0">
+    <div class="sec-lead"><span class="num">0</span><h2>The full import block</h2></div>
+    <p>Every import that appears anywhere in the notebooks, merged into one cell. You won't need all of these in one script — but reproducing the ones relevant to a question, from memory, is worth marks.</p>
+    <pre><code class="language-python">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from datetime import date
+from warnings import filterwarnings
+filterwarnings('ignore')
+
+from scipy import stats
+from scipy.stats import shapiro
+from scipy.stats import zscore
+
+import statsmodels.api as sm                 # sm.OLS, sm.add_constant, sm.qqplot
+import statsmodels.stats.api as sms           # sms.het_breuschpagan
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.stats.diagnostic import het_goldfeldquandt
+from statsmodels.graphics.gofplots import qqplot
+
+from sklearn.model_selection import (train_test_split, cross_val_score,
+                                      LeaveOneOut, GridSearchCV, RandomizedSearchCV)
+from sklearn.preprocessing import (OneHotEncoder, LabelEncoder, OrdinalEncoder,
+                                    StandardScaler, MinMaxScaler)
+from sklearn.linear_model import (LinearRegression, SGDRegressor,
+                                   Ridge, Lasso, ElasticNet)
+from sklearn.feature_selection import RFE
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                              mean_absolute_percentage_error, r2_score)
+
+from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+
+import optuna
+from optuna.samplers import TPESampler</code></pre>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Table of contents for this page</b><a class="inl" href="#pandas">pandas</a> · <a class="inl" href="#numpy">numpy</a> · <a class="inl" href="#plot">seaborn / matplotlib</a> · <a class="inl" href="#scipy">scipy.stats</a> · <a class="inl" href="#sk-pre">sklearn.preprocessing</a> · <a class="inl" href="#sk-split">sklearn.model_selection</a> · <a class="inl" href="#sk-lin">sklearn.linear_model</a> · <a class="inl" href="#sk-feat">Feature selection (RFE, mlxtend)</a> · <a class="inl" href="#sk-metrics">sklearn.metrics</a> · <a class="inl" href="#sm">statsmodels</a> · <a class="inl" href="#optuna">optuna</a> · <a class="inl" href="#misc">misc</a></div>
+  </section>
+
+  <!-- ============ PANDAS ============ -->
+  <section class="sec" id="pandas" data-group="Core data libraries" data-badge="1">
+    <div class="sec-lead"><span class="num">1</span><h2>pandas <span class="tag">import pandas as pd</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>pd.read_csv(path)</code></td><td>Loads a CSV into a DataFrame.</td></tr>
+          <tr><td><code>df.head()</code></td><td>First 5 rows — sanity-check a load.</td></tr>
+          <tr><td><code>df.shape</code></td><td>(rows, columns) tuple.</td></tr>
+          <tr><td><code>df.info()</code></td><td>Dtypes + non-null counts per column — fastest way to spot missing data.</td></tr>
+          <tr><td><code>df.describe()</code></td><td>count/mean/std/min/quartiles/max for numeric columns only.</td></tr>
+          <tr><td><code>df.describe(include="object")</code></td><td>count/unique/top/freq for categorical columns.</td></tr>
+          <tr><td><code>df.dtypes</code></td><td>Data type of every column.</td></tr>
+          <tr><td><code>df["c"].value_counts()</code></td><td>Frequency of each category in a column.</td></tr>
+          <tr><td><code>df.select_dtypes(include='object' / np.number)</code></td><td>Filters columns by dtype — isolates categorical or numeric columns.</td></tr>
+          <tr><td><code>df.isnull().sum()</code></td><td>Count of missing values per column.</td></tr>
+          <tr><td><code>df.duplicated().sum()</code></td><td>Count of fully duplicated rows.</td></tr>
+          <tr><td><code>df.dropna()</code></td><td>Drops any row containing a null (returns a new frame — must reassign).</td></tr>
+          <tr><td><code>df["c"].fillna(value)</code></td><td>Fills nulls with mean / median / <code>mode()[0]</code> / a constant.</td></tr>
+          <tr><td><code>df.replace(old, new)</code></td><td>Swaps values — used to turn disguised missing markers ("?", "NA", 0) into <code>np.nan</code>.</td></tr>
+          <tr><td><code>pd.to_numeric(s, errors="coerce")</code></td><td>Forces a column to numeric; unparsable values become NaN.</td></tr>
+          <tr><td><code>df.groupby(col)</code></td><td>Groups rows by a column's values, e.g. for group means (domain imputation, target/frequency encoding).</td></tr>
+          <tr><td><code>df["c"].map(dict_or_series)</code></td><td>Translates each value through a mapping — used for frequency/target encoding and code→label lookups.</td></tr>
+          <tr><td><code>df["c"].apply(func)</code></td><td>Runs a function on every value — e.g. slicing a string.</td></tr>
+          <tr><td><code>pd.get_dummies(df, columns, drop_first)</code></td><td>One-hot encodes columns; <code>drop_first=True</code> gives k−1 dummies (avoids the dummy trap).</td></tr>
+          <tr><td><code>pd.concat([a, b], axis=1)</code></td><td>Joins DataFrames/Series side by side (columns) or stacked (rows, axis=0).</td></tr>
+          <tr><td><code>df.corr(numeric_only=True)</code></td><td>Pairwise Pearson correlation matrix.</td></tr>
+          <tr><td><code>df.quantile(q)</code></td><td>The q-th quantile per column — used for Q1/Q3 in IQR outlier detection.</td></tr>
+          <tr><td><code>df.skew()</code></td><td>Skewness of a distribution: &gt;0 right-skew, &lt;0 left-skew, ≈0 symmetric.</td></tr>
+          <tr><td><code>df.boxplot()</code></td><td>Quick boxplot of every numeric column (pandas' built-in, no seaborn needed).</td></tr>
+          <tr><td><code>df.std()</code></td><td>Standard deviation per column — used to spot near-zero-variance (useless) columns.</td></tr>
+          <tr><td><code>df.loc[row, col]</code></td><td>Label-based access — read/write a specific cell (used in conditional/domain imputation).</td></tr>
+          <tr><td><code>pd.options.display.max_columns = None</code></td><td>Session-wide setting so wide DataFrames never truncate columns with "...".</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ NUMPY ============ -->
+  <section class="sec" id="numpy" data-group="Core data libraries" data-badge="2">
+    <div class="sec-lead"><span class="num">2</span><h2>numpy <span class="tag">import numpy as np</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>np.nan</code></td><td>The canonical "missing value" marker pandas/numpy recognise.</td></tr>
+          <tr><td><code>np.number</code></td><td>Dtype filter passed to <code>select_dtypes</code> to grab numeric columns.</td></tr>
+          <tr><td><code>np.where(condition)</code></td><td>Returns the positional indexes where a condition is True (used to locate rows to fix).</td></tr>
+          <tr><td><code>np.log(x)</code> / <code>np.log1p(x)</code></td><td>Natural log transform to fix right-skew; <code>log1p</code> = log(1+x), safe when x has zeros.</td></tr>
+          <tr><td><code>np.exp(x)</code> / <code>np.expm1(x)</code></td><td>Inverse of log/log1p — converts log-scale predictions back to real units.</td></tr>
+          <tr><td><code>np.sqrt(x)</code></td><td>Square root — a gentler skew-reducing transform than log; handles zeros.</td></tr>
+          <tr><td><code>np.mean(x)</code> / <code>np.sum(x)</code></td><td>Basic aggregates, used when computing OLS coefficients "by hand".</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ PLOTTING ============ -->
+  <section class="sec" id="plot" data-group="Core data libraries" data-badge="3">
+    <div class="sec-lead"><span class="num">3</span><h2>seaborn &amp; matplotlib <span class="tag">import seaborn as sns / matplotlib.pyplot as plt</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>sns.histplot(x, kde=True)</code></td><td>Histogram with a smoothed density curve — checks skew/shape of a distribution.</td></tr>
+          <tr><td><code>sns.boxplot(x, whis=1.5)</code></td><td>Box = IQR, whiskers = 1.5×IQR, points beyond = outliers.</td></tr>
+          <tr><td><code>sns.scatterplot(x, y)</code></td><td>Bivariate scatter — spot trends and bivariate outliers.</td></tr>
+          <tr><td><code>sns.heatmap(matrix, annot=True)</code></td><td>Colour-coded grid — used for missing-value maps and correlation heatmaps.</td></tr>
+          <tr><td><code>sns.barplot(x, y, data)</code></td><td>Bar chart — used here to visualise model coefficients (regularization shrinkage).</td></tr>
+          <tr><td><code>plt.scatter(x, y)</code> / <code>plt.plot(x, y)</code></td><td>Raw matplotlib scatter / line — e.g. drawing the fitted regression line over the data.</td></tr>
+          <tr><td><code>plt.subplots(r, c)</code> / <code>plt.subplot(r,c,i)</code></td><td>Creates a grid of axes for multiple plots side by side.</td></tr>
+          <tr><td><code>plt.axhline(0)</code></td><td>Horizontal reference line at 0 — the "no error" line on a residual plot.</td></tr>
+          <tr><td><code>plt.rcParams["figure.figsize"]</code></td><td>Session-wide default plot size.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ SCIPY ============ -->
+  <section class="sec" id="scipy" data-group="Core data libraries" data-badge="4">
+    <div class="sec-lead"><span class="num">4</span><h2>scipy.stats <span class="tag">from scipy import stats</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>stats.zscore(series)</code></td><td>Converts a column to z-scores; <code>|z| &gt; 3</code> flags an outlier.</td></tr>
+          <tr><td><code>stats.boxcox(x)</code></td><td>Box-Cox transform — auto-picks the power λ that best normalises x (needs strictly positive data). Returns <code>(transformed, lambda)</code>.</td></tr>
+          <tr><td><code>shapiro(x)</code></td><td>Shapiro-Wilk normality test on residuals. H₀ = data is normal; <code>p &gt; 0.05</code> → normal.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ SKLEARN PREPROCESSING ============ -->
+  <section class="sec" id="sk-pre" data-group="scikit-learn" data-badge="5">
+    <div class="sec-lead"><span class="num">5</span><h2>sklearn.preprocessing <span class="tag">encoders &amp; scalers</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Class</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>OneHotEncoder()</code></td><td>Makes one 0/1 column per category. Returns a <b>sparse</b> matrix by default → <code>.toarray()</code> or <code>sparse_output=False</code>. Use when you need to persist/reuse the fitted encoding.</td></tr>
+          <tr><td><code>LabelEncoder()</code></td><td>Assigns integers <b>alphabetically</b> to categories — arbitrary order. Safe only for the <b>target</b> variable or genuinely ordinal features.</td></tr>
+          <tr><td><code>OrdinalEncoder(categories=[[...]])</code></td><td>You supply the true category order, so the resulting integers carry meaning (Small&lt;Medium&lt;High).</td></tr>
+          <tr><td><code>StandardScaler()</code></td><td>z-score scaling: <code>(x−mean)/std</code> → mean 0, std 1, unbounded. Keeps outlier impact. Needed before Ridge/Lasso.</td></tr>
+          <tr><td><code>MinMaxScaler()</code></td><td>Normalisation: <code>(x−min)/(max−min)</code> → fixed [0,1] range. Very sensitive to outliers.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">Shared method pattern</b>Every encoder/scaler: <code>.fit_transform(X_train)</code> to fit + apply on train, then <code>.transform(X_test)</code> — never re-fit — on test. Fitting on the full dataset before splitting is data leakage.</div>
+  </section>
+
+  <!-- ============ SKLEARN MODEL SELECTION ============ -->
+  <section class="sec" id="sk-split" data-group="scikit-learn" data-badge="6">
+    <div class="sec-lead"><span class="num">6</span><h2>sklearn.model_selection <span class="tag">splitting, CV, tuning</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Class / function</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>train_test_split(X, y, test_size, random_state)</code></td><td>Splits into train/test sets; <code>random_state</code> fixes the shuffle for reproducibility.</td></tr>
+          <tr><td><code>cross_val_score(estimator, X, y, cv, scoring)</code></td><td>Runs k-fold CV, returns one score per fold (e.g. R²) — average for an honest, less-lucky performance estimate.</td></tr>
+          <tr><td><code>LeaveOneOut()</code></td><td>CV splitter where k = n rows — each fold tests on exactly one row. Thorough but slow; only for small data.</td></tr>
+          <tr><td><code>GridSearchCV(estimator, param_grid, cv)</code></td><td>Exhaustively tries every hyperparameter combination with CV; <code>.best_params_</code> / <code>.best_estimator_</code> give the winner. Thorough but slow on big grids.</td></tr>
+          <tr><td><code>RandomizedSearchCV(estimator, param_distributions, cv, n_iter)</code></td><td>Tries <code>n_iter</code> random hyperparameter combinations instead of all — faster, usually lands close to optimal.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ SKLEARN LINEAR MODELS ============ -->
+  <section class="sec" id="sk-lin" data-group="scikit-learn" data-badge="7">
+    <div class="sec-lead"><span class="num">7</span><h2>sklearn.linear_model <span class="tag">regression models</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Class</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>LinearRegression()</code></td><td>Plain OLS regression. Adds its own intercept automatically — never call <code>add_constant</code> with it.</td></tr>
+          <tr><td><code>SGDRegressor()</code></td><td>Linear regression fit by (stochastic) gradient descent instead of the closed-form OLS solution — used for very large data; has mild built-in regularization.</td></tr>
+          <tr><td><code>Ridge(alpha)</code></td><td>L2-regularized regression — penalty Σβ². Shrinks all coefficients towards 0 but never exactly to 0.</td></tr>
+          <tr><td><code>Lasso(alpha)</code></td><td>L1-regularized regression — penalty Σ|β|. Can drive weak coefficients to exactly 0 → built-in feature selection.</td></tr>
+          <tr><td><code>ElasticNet(alpha, l1_ratio)</code></td><td>Combines L1+L2. <code>l1_ratio=0</code> → pure Ridge, <code>=1</code> → pure Lasso, between → a blend.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Shared method pattern</b>All five: <code>.fit(X_train, y_train)</code>, <code>.predict(X_test)</code>, <code>.score(X, y)</code> (returns R²), <code>.coef_</code> (slopes), <code>.intercept_</code> (b0). <code>alpha</code> is the regularization strength (hyperparameter) for Ridge/Lasso/ElasticNet — 0 = plain OLS, bigger = more shrinkage.</div>
+  </section>
+
+  <!-- ============ FEATURE SELECTION ============ -->
+  <section class="sec" id="sk-feat" data-group="scikit-learn" data-badge="8">
+    <div class="sec-lead"><span class="num">8</span><h2>Feature selection <span class="tag">RFE · SequentialFeatureSelector</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Class</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>RFE(estimator, n_features_to_select)</code></td><td>Recursive Feature Elimination — fits the model, ranks features by importance, drops the weakest, repeats. <code>.ranking_</code> gives each feature's rank (1 = keep); an instance of backward elimination.</td></tr>
+          <tr><td><code>sfs(estimator, k_features, forward, scoring)</code></td><td>mlxtend's <code>SequentialFeatureSelector</code>. <code>forward=True</code> = forward selection (start empty, add best feature each step); <code>forward=False</code> = backward elimination (start full, drop weakest). <code>k_features</code>: an int, a range <code>(lo,hi)</code>, or <code>'best'</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box info"><span class="ic">i</span><b class="lbl">Key attributes</b>After <code>.fit()</code>: <code>sfs</code> gives <code>.k_feature_names_</code> and <code>.k_score_</code>; <code>RFE</code> gives <code>.ranking_</code> and <code>.support_</code> (boolean mask of selected columns).</div>
+  </section>
+
+  <!-- ============ SKLEARN METRICS ============ -->
+  <section class="sec" id="sk-metrics" data-group="scikit-learn" data-badge="9">
+    <div class="sec-lead"><span class="num">9</span><h2>sklearn.metrics <span class="tag">error &amp; fit metrics</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Function</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>mean_absolute_error(y_true, y_pred)</code></td><td>MAE — average of |errors|, same units as target, robust to outliers.</td></tr>
+          <tr><td><code>mean_squared_error(y_true, y_pred)</code></td><td>MSE — average of squared errors; take <code>np.sqrt()</code> for RMSE, which punishes big misses more.</td></tr>
+          <tr><td><code>mean_absolute_percentage_error(y_true, y_pred)</code></td><td>MAPE — average error as a fraction of the true value; ×100 to read as a percentage.</td></tr>
+          <tr><td><code>r2_score(y_true, y_pred)</code></td><td>R² computed from explicit predictions (vs. <code>model.score()</code> which does the same thing on a fitted estimator).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ STATSMODELS ============ -->
+  <section class="sec" id="sm" data-group="statsmodels" data-badge="10">
+    <div class="sec-lead"><span class="num">10</span><h2>statsmodels <span class="tag">import statsmodels.api as sm</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>sm.add_constant(X)</code></td><td>Adds a column of 1s so OLS can estimate the intercept b0. <b>Required</b> for statsmodels — it does NOT add one for you (unlike sklearn's LinearRegression).</td></tr>
+          <tr><td><code>sm.OLS(y, X).fit()</code></td><td>Fits ordinary least squares; returns a results object with everything below.</td></tr>
+          <tr><td><code>model.summary()</code></td><td>The full stats report: coefficients, std errors, t-stats, p-values, R², Adj R², F-statistic, Durbin-Watson, Jarque-Bera.</td></tr>
+          <tr><td><code>model.params</code></td><td>Fitted coefficients (β₀, β₁, …) as a Series.</td></tr>
+          <tr><td><code>model.pvalues</code></td><td>p-value per coefficient — &gt;0.05 means that feature is statistically insignificant (a backward-elimination drop candidate).</td></tr>
+          <tr><td><code>model.rsquared</code> / <code>model.rsquared_adj</code></td><td>R² and Adjusted R² of the fitted model.</td></tr>
+          <tr><td><code>model.fvalue</code> / <code>model.f_pvalue</code></td><td>The F-statistic and its p-value — tests whether the whole model (not just one coefficient) is significant.</td></tr>
+          <tr><td><code>model.resid</code></td><td>Residuals (actual − predicted) for every training row — feeds every assumption check.</td></tr>
+          <tr><td><code>model.fittedvalues</code></td><td>The model's predicted values on the data it was fit on.</td></tr>
+          <tr><td><code>qqplot(resid, line='s')</code></td><td>Q-Q plot of residuals — points on the 45° line ⇒ residuals are normally distributed.</td></tr>
+          <tr><td><code>sms.het_breuschpagan(resid, X)</code></td><td>Breusch-Pagan test for homoscedasticity. H₀ = constant variance; <code>p &gt; 0.05</code> → homoscedastic (good).</td></tr>
+          <tr><td><code>het_goldfeldquandt(resid, X)</code></td><td>Alternative homoscedasticity test — same H₀/decision rule as Breusch-Pagan.</td></tr>
+          <tr><td><code>variance_inflation_factor(X.values, i)</code></td><td>VIF for column i — <code>1/(1−R²)</code> of that feature regressed on the rest. VIF&gt;5 ⇒ high multicollinearity, drop it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box trap"><span class="ic">!</span><b class="lbl">The one everyone forgets</b><code>sm.OLS</code> does not add an intercept — skip <code>sm.add_constant(X)</code> and you silently fit a line forced through the origin.</div>
+  </section>
+
+  <!-- ============ OPTUNA ============ -->
+  <section class="sec" id="optuna" data-group="Tuning" data-badge="11">
+    <div class="sec-lead"><span class="num">11</span><h2>optuna <span class="tag">Bayesian hyperparameter search</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>optuna.create_study(direction, sampler)</code></td><td>Starts a tuning study; <code>direction='minimize'</code> for an error metric like RMSE. <code>TPESampler(seed=...)</code> makes it reproducible.</td></tr>
+          <tr><td><code>study.optimize(objective, n_trials)</code></td><td>Runs the search: each trial calls your <code>objective(trial)</code> function, which builds a model and returns the score to minimise/maximise.</td></tr>
+          <tr><td><code>trial.suggest_float(name, low, high)</code></td><td>Inside <code>objective</code> — asks Optuna to propose a value for one hyperparameter in a given range.</td></tr>
+          <tr><td><code>study.best_trial.value / .params</code></td><td>The best score found and the hyperparameters that produced it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box tip"><span class="ic">✓</span><b class="lbl">vs. Grid/Randomized search</b>Optuna is <b>Bayesian</b> — each trial learns from the previous ones and steers toward promising regions, so it needs far fewer trials than an exhaustive grid.</div>
+  </section>
+
+  <!-- ============ MISC ============ -->
+  <section class="sec" id="misc" data-group="Misc" data-badge="12">
+    <div class="sec-lead"><span class="num">12</span><h2>Misc <span class="tag">datetime · warnings</span></h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Call</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td><code>date.today().year</code></td><td>Current year, from <code>datetime.date</code> — used to engineer an "age" feature from a year column (not reproducible across years, an exam trap).</td></tr>
+          <tr><td><code>filterwarnings('ignore')</code></td><td>Silences library warning spam in notebook output (from <code>warnings</code>).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>Compiled from the Session 1–5 faculty notebooks (BigMart Sales, carpremium, House Price, Appliances Energy, Housing Price Prediction). One-page reference for exam night — see the individual chapter kits for full derivations, formulas and worked QP answers.</p>
+  </div>

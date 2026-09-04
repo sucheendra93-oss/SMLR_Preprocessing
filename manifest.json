@@ -47,5 +47,12 @@
     "title": "Model Optimization Exam Kit",
     "eyebrow": "ML1 \u00b7 Session 5 \u00b7 Housing Price Prediction",
     "description": "Bias/variance, cross-validation, gradient descent, Ridge/Lasso/ElasticNet regularization and hyperparameter tuning (GridSearch, RandomizedSearch, Optuna) \u2014 every cell of the faculty notebook, coded and explained simply."
+  },
+  {
+    "id": "06",
+    "file": "06-reference.html",
+    "title": "Classes, Methods & Imports Reference",
+    "eyebrow": "All Sessions \u00b7 Quick Lookup",
+    "description": "Every import, class and method used across Sessions 1\u20135 \u2014 pandas, numpy, seaborn, scipy, statsmodels, scikit-learn, mlxtend, optuna \u2014 each with a one-line summary. One page for exam-night revision."
   }
 ]
