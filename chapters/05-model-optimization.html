@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Optimization Exam Kit</title>
+<meta name="description" content="Bias/variance, cross-validation, gradient descent, Ridge/Lasso/ElasticNet regularization and hyperparameter tuning (GridSearch, RandomizedSearch, Optuna) — every cell of the faculty notebook, coded and explained simply.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="shell">
+<aside>
+  <p class="brand"><a href="../index.html">SMLR Exam Kit</a><small>ML1 · Session notes</small></p>
+  <div class="tog" role="group" aria-label="Theme">
+    <button data-set="light" aria-pressed="false">Light</button>
+    <button data-set="auto" aria-pressed="true">Auto</button>
+    <button data-set="dark" aria-pressed="false">Dark</button>
+  </div>
+  <nav>
+    <div class="grp">Chapters</div>
+    <a href="01-preprocessing.html"><span class="n">01</span><span>Preprocessing Exam Kit</span></a>
+    <a href="01-preprocessing-simple.html"><span class="n">01-simple</span><span>Data Preprocessing — Simple</span></a>
+    <a href="02-linear-regression.html"><span class="n">02</span><span>Linear Regression Exam Kit</span></a>
+    <a href="02-linear-regression-simple.html"><span class="n">02-simple</span><span>Linear Regression — Simple</span></a>
+    <a href="03-mlr.html"><span class="n">03</span><span>Multiple Linear Regression Exam Kit</span></a>
+    <a href="04-feature-selection.html"><span class="n">04</span><span>Feature Selection Exam Kit</span></a>
+    <a class="active" href="05-model-optimization.html"><span class="n">05</span><span>Model Optimization Exam Kit</span></a>
+    <div class="grp">In this chapter</div>
+    <a href="#picture"><span class="n">1</span><span>Big Picture: Bias, Variance &amp; the Goal</span></a>
+    <a href="#libs"><span class="n">2</span><span>Import Libraries</span></a>
+    <a href="#prep"><span class="n">3</span><span>Data Preparation</span></a>
+    <a href="#mlr"><span class="n">4</span><span>Multiple Linear Regression (OLS)</span></a>
+    <a href="#helpers"><span class="n">5</span><span>Helper Functions &amp; the Score Card</span></a>
+    <a href="#cv"><span class="n">6</span><span>Cross-Validation (Model Validation)</span></a>
+    <a href="#gd"><span class="n">7</span><span>Gradient Descent &amp; SGD</span></a>
+    <a href="#regu"><span class="n">8</span><span>Regularization: Ridge, Lasso &amp; Elastic Net</span></a>
+    <a href="#tune"><span class="n">9</span><span>Hyperparameter Tuning</span></a>
+    <a href="#recipe"><span class="n">★</span><span>Exam-Ready Recipe (write in this order)</span></a>
+    <a href="#quick"><span class="n">≡</span><span>Quick Revision</span></a>
+  </nav>
+</aside>
+
+<main>
+<div class="hero">
+  <span class="eyebrow">ML1 · Session 5 · Housing Price Prediction</span>
+  <h1>Model Optimization — Exam Kit</h1>
+  <p class="lede">Every cell of the faculty notebook, explained simply. We start from <b>bias &amp; variance</b> (why models over/underfit), then check honesty with <b>cross-validation</b>, speed up training with <b>gradient descent</b>, cure overfitting with <b>Ridge / Lasso / Elastic Net</b>, and finally auto-pick the best settings with <b>GridSearch, RandomizedSearch and Optuna</b>. Code first, jargon last.</p>
+</div>
+
+<!-- 1 -->
+<section class="sec" id="picture" data-badge="1"><div class="sec-lead"><span class="num">1</span><h2>Big Picture: Bias, Variance &amp; the Goal</h2></div>
+<p>Sessions 3–4 built and trimmed a linear model. <b>Optimization</b> is Session 5's job: making the model <b>as accurate as possible on data it has never seen</b>. Three sub-goals from the slides:</p>
+<div class="tbl-wrap"><table>
+<tr><th>Optimization step</th><th>Plain meaning</th></tr>
+<tr><td><b>Prediction Evaluation</b></td><td>How well does the model actually predict? (RMSE, MAPE, R²)</td></tr>
+<tr><td><b>Model Validation</b></td><td>Test on held-out data to check it isn't fooling us (cross-validation).</td></tr>
+<tr><td><b>Fine Tuning</b></td><td>Squeeze out the best performance (regularization + hyperparameter tuning).</td></tr>
+</table></div>
+
+<h3>1.1 Two enemies: Bias and Variance</h3>
+<div class="grid2">
+<div class="box tip"><b>Bias</b> = the model is <b>too simple</b> to catch the real pattern. A straight line can never bend to follow a curve, so it's always a bit wrong — but wrong <b>consistently</b>. High bias → <b>underfitting</b>.</div>
+<div class="box"><b>Variance</b> = the model is <b>too flexible</b> and memorises the training data (even the noise). It nails train data but its answer <b>swings wildly</b> on new data. High variance → <b>overfitting</b>.</div>
+</div>
+<div class="box tip"><b>Analogy — studying for an exam:</b> High <b>bias</b> = you skimmed one summary page, so you get everything a little wrong. High <b>variance</b> = you memorised last year's paper word-for-word; perfect on that paper, lost on this year's new questions. We want the student who <b>understood the concepts</b> — good on both.</div>
+
+<h3>1.2 Underfit vs Good fit vs Overfit</h3>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>Underfitting</th><th>Good fit (robust)</th><th>Overfitting</th></tr>
+<tr><td>Model</td><td>too simple</td><td>just right</td><td>too complex</td></tr>
+<tr><td>Bias</td><td>high</td><td>low</td><td>low</td></tr>
+<tr><td>Variance</td><td>low</td><td>low</td><td>high</td></tr>
+<tr><td>Train error</td><td>high</td><td>low</td><td><b>very</b> low</td></tr>
+<tr><td>Test error</td><td>high</td><td>low</td><td><b>high</b></td></tr>
+</table></div>
+<div class="box"><b>The tell-tale sign of overfitting:</b> a <b>big gap</b> between train error and test error (great on train, poor on test). This gap is called <b>generalization error</b>. Everything in this session — CV, regularization, tuning — exists to shrink that gap.</div>
+<p>This notebook predicts house <b>PRICE</b> from area characteristics (crime rate, rooms, tax rate, etc.), with some extra interaction variables added.</p>
+</section>
+
+<!-- 2 -->
+<section class="sec" id="libs" data-badge="2"><div class="sec-lead"><span class="num">2</span><h2>Import Libraries</h2></div>
+<pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+
+<span class="kw">from</span> warnings <span class="kw">import</span> filterwarnings
+filterwarnings(<span class="str">'ignore'</span>)
+
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+
+<span class="cmt"># metrics to score the model</span>
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
+
+<span class="cmt"># the models we build this session</span>
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression, SGDRegressor
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> Ridge, Lasso, ElasticNet
+
+<span class="cmt"># validation + tuning tools</span>
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_score
+
+plt.rcParams[<span class="str">'figure.figsize'</span>] = [<span class="nm">15</span>, <span class="nm">8</span>]</code></pre>
+<p><b>Who does what</b> (the new names vs earlier sessions):</p>
+<ul>
+<li><code>StandardScaler</code> → puts all features on the same scale. <span class="pill">must-do before regularization</span></li>
+<li><code>SGDRegressor</code> → linear regression trained by <b>gradient descent</b>.</li>
+<li><code>Ridge, Lasso, ElasticNet</code> → the three <b>regularized</b> regressions.</li>
+<li><code>cross_val_score, LeaveOneOut</code> → <b>validation</b> tools.</li>
+<li><code>GridSearchCV, RandomizedSearchCV</code> → auto-search for the best <b>hyperparameter</b> (λ / alpha).</li>
+</ul>
+</section>
+
+<!-- 3 -->
+<section class="sec" id="prep" data-badge="3"><div class="sec-lead"><span class="num">3</span><h2>Data Preparation</h2></div>
+
+<h3>3.1 Load &amp; inspect</h3>
+<pre><code>df_house = pd.read_csv(<span class="str">'housing_data_catg_interact.csv'</span>)
+df_house.head()      <span class="cmt"># first 5 rows</span>
+df_house.shape       <span class="cmt"># (rows, columns)</span>
+df_house.dtypes      <span class="cmt"># data type of each column</span></code></pre>
+
+<h3>3.2 Drop the useless column</h3>
+<pre><code><span class="cmt"># RecNo is just a row id — it predicts nothing</span>
+df_house = df_house.drop(<span class="str">'RecNo'</span>, axis=<span class="nm">1</span>)</code></pre>
+
+<h3>3.3 Missing values</h3>
+<pre><code>df_house.isnull().sum()</code></pre>
+<div class="box out"><b>Result:</b> every count is <b>0</b> → no missing values, nothing to fix.</div>
+
+<h3>3.4 Split into features (X) and target (y), then dummy-encode</h3>
+<pre><code>df_target  = df_house[<span class="str">'PRICE'</span>]                 <span class="cmt"># y = what we predict</span>
+df_feature = df_house.drop(<span class="str">'PRICE'</span>, axis=<span class="nm">1</span>)     <span class="cmt"># X = everything else</span>
+
+<span class="cmt"># remember which columns are numeric — we scale only these later</span>
+numeric_cols = df_feature.select_dtypes(include=[np.number]).columns
+
+<span class="cmt"># turn text/categorical columns into 0/1 columns</span>
+df_feature = pd.get_dummies(data=df_feature, drop_first=<span class="kw">True</span>, dtype=np.uint)</code></pre>
+<div class="box tip"><b>Why <code>drop_first=True</code>?</b> If a column is "Yes/No", one 0/1 column already says everything (0 = No, 1 = Yes). Keeping both would be redundant and cause the <b>dummy-variable trap</b>. Drop one to be safe.</div>
+
+<h3>3.5 Train–Test split</h3>
+<pre><code>X = df_feature
+y = df_target
+
+X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=<span class="nm">10</span>, test_size=<span class="nm">0.2</span>)   <span class="cmt"># 80% train, 20% test</span></code></pre>
+<div class="box"><b><code>random_state=10</code></b> just fixes the "random" shuffle so you get the <b>same split every run</b> → reproducible results.</div>
+
+<h3>3.6 Scale the numeric features <span class="pill">Z-score</span></h3>
+<pre><code>scaler = StandardScaler()
+X_train[numeric_cols] = scaler.fit_transform(X_train[numeric_cols])   <span class="cmt"># fit + transform on TRAIN</span>
+X_test[numeric_cols]  = scaler.transform(X_test[numeric_cols])        <span class="cmt"># only transform on TEST</span></code></pre>
+<div class="box"><b>Golden rule — fit only on train:</b> the scaler learns the mean &amp; standard deviation from <b>train data only</b> (<code>fit_transform</code>), then applies those same numbers to test (<code>transform</code>). If you fit on the test set too, test information leaks into training — that's cheating.</div>
+<div class="box tip"><b>Why scale at all before regularization?</b> Regularization punishes big coefficients. A feature measured in large numbers (e.g. TAX in thousands) would get an unfairly big penalty just because of its <b>units</b>. Scaling puts everyone on a level field so the penalty is <b>fair</b>.</div>
+
+<h4>Normalization vs Standardization <span class="pill">exam wording</span></h4>
+<p>Two ways to scale. This notebook uses <b>Standardization</b> (<code>StandardScaler</code>). Follow the faculty wording below in the exam:</p>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>Normalization (Min-Max)</th><th>Standardization (Z-score)</th></tr>
+<tr><td>Formula</td><td>(x − min) / (max − min)</td><td>(x − mean) / σ</td></tr>
+<tr><td>Output</td><td>fixed range 0 → 1</td><td>mean 0, std 1 (no fixed range)</td></tr>
+<tr><td>Use when…</td><td>distribution is <b>unknown / non-Gaussian</b></td><td>data is <b>roughly Gaussian</b></td></tr>
+<tr><td>Outliers</td><td>get squashed by them</td><td><b>keeps their impact</b></td></tr>
+</table></div>
+<div class="box tip"><b>Faculty line to write:</b> use <b>Normalization</b> when the distribution is unknown or not Gaussian; use <b>Standardization</b> when the data is roughly Gaussian, and prefer it when important <b>outliers should retain their impact</b> — which is why this notebook picks <code>StandardScaler</code>.</div>
+</section>
+
+<!-- 4 -->
+<section class="sec" id="mlr" data-badge="4"><div class="sec-lead"><span class="num">4</span><h2>Multiple Linear Regression (OLS)</h2></div>
+<p>OLS = <b>Ordinary Least Squares</b>: the plain linear regression that finds the line minimising the sum of squared errors. The notebook builds it <b>twice</b> — once in statsmodels, once in sklearn — only to compare them. We <b>keep the sklearn one</b> going forward.</p>
+
+<h3>4.1 statsmodels version (for the summary table)</h3>
+<pre><code><span class="cmt"># ** statsmodels ALWAYS needs a constant column added (for the intercept b0) **</span>
+stats_ols_model = sm.OLS(y_train, sm.add_constant(X_train)).fit()
+stats_ols_model.summary()
+
+<span class="cmt"># predict on test (also add_constant here)</span>
+test_pred_stats = stats_ols_model.predict(sm.add_constant(X_test))</code></pre>
+
+<h3>4.2 The four error metrics</h3>
+<pre><code>print(<span class="str">"Test MSE  :"</span>, mean_squared_error(y_test, test_pred_stats))
+print(<span class="str">"Test RMSE :"</span>, np.sqrt(mean_squared_error(y_test, test_pred_stats)))
+print(<span class="str">"Test MAE  :"</span>, mean_absolute_error(y_test, test_pred_stats))
+print(<span class="str">"Test MAPE :"</span>, mean_absolute_percentage_error(y_test, test_pred_stats) * <span class="nm">100</span>)</code></pre>
+<div class="tbl-wrap"><table>
+<tr><th>Metric</th><th>What it means (plain)</th><th>Note</th></tr>
+<tr><td><b>MSE</b></td><td>Average of squared errors. Punishes big misses hard.</td><td>units are squared → hard to read</td></tr>
+<tr><td><b>RMSE</b></td><td>√MSE → back in original units (₹/price). Lower = better.</td><td>the main score we use</td></tr>
+<tr><td><b>MAE</b></td><td>Average of plain |errors|. Less harsh on outliers.</td><td>easy to explain</td></tr>
+<tr><td><b>MAPE</b></td><td>Average error <b>as a %</b>. "Off by ~12% on average."</td><td>× 100 to read as percent</td></tr>
+</table></div>
+
+<h3>4.3 sklearn version (the one we keep)</h3>
+<pre><code>linreg    = LinearRegression()
+MLR_model = linreg.fit(X_train, y_train)     <span class="cmt"># NOTE: sklearn needs NO add_constant</span>
+
+print(<span class="str">"R-Squared :"</span>, MLR_model.score(X_train, y_train))
+MLR_model.coef_        <span class="cmt"># the slopes (one per feature)</span>
+MLR_model.intercept_   <span class="cmt"># the constant b0</span>
+
+test_pred = MLR_model.predict(X_test)</code></pre>
+<div class="box"><b>One fact examiners love:</b> <code>add_constant()</code> is for <b>statsmodels OLS only</b>. sklearn's <code>LinearRegression</code> adds the intercept automatically — never add it yourself there.</div>
+<div class="box tip"><b>What is R²?</b> The % of the target's variation the model explains. R² = 0.75 means "the model accounts for 75% of why prices differ." <code>model.score()</code> in sklearn returns R².</div>
+</section>
+
+<!-- 5 -->
+<section class="sec" id="helpers" data-badge="5"><div class="sec-lead"><span class="num">5</span><h2>Helper Functions &amp; the Score Card</h2></div>
+<p>We build many models, so we make small reusable functions and one table to compare them all. <b>Learn these — they're reused in every later section.</b></p>
+
+<h3>5.1 RMSE and MAPE helpers</h3>
+<pre><code><span class="kw">def</span> <span class="fn">get_train_rmse</span>(model):
+    train_pred = model.predict(X_train)
+    <span class="kw">return</span> round(np.sqrt(mean_squared_error(y_train, train_pred)), <span class="nm">4</span>)
+
+<span class="kw">def</span> <span class="fn">get_test_rmse</span>(model):
+    test_pred = model.predict(X_test)
+    <span class="kw">return</span> round(np.sqrt(mean_squared_error(y_test, test_pred)), <span class="nm">4</span>)
+
+<span class="kw">def</span> <span class="fn">get_test_mape</span>(model):
+    test_pred = model.predict(X_test)
+    <span class="kw">return</span> mean_absolute_percentage_error(y_test, test_pred) * <span class="nm">100</span></code></pre>
+
+<h3>5.2 R² and Adjusted R²</h3>
+<pre><code><span class="kw">def</span> <span class="fn">get_score</span>(model):
+    r_sq = model.score(X_train, y_train)          <span class="cmt"># R²</span>
+    n = X_train.shape[<span class="nm">0</span>]                        <span class="cmt"># rows</span>
+    k = X_train.shape[<span class="nm">1</span>]                        <span class="cmt"># features</span>
+    r_sq_adj = <span class="nm">1</span> - ((<span class="nm">1</span>-r_sq)*(n-<span class="nm">1</span>)/(n-k-<span class="nm">1</span>))     <span class="cmt"># Adjusted R²</span>
+    <span class="kw">return</span> [r_sq, r_sq_adj]</code></pre>
+<div class="box tip"><b>Why Adjusted R²?</b> Plain R² <b>never goes down</b> when you add features, even useless ones. Adjusted R² <b>penalises extra features</b>, so it only rises if a new feature genuinely helps. Fairer for comparing models of different sizes.</div>
+
+<h3>5.3 The score card (compare all models in one table)</h3>
+<pre><code>score_card = pd.DataFrame(columns=[<span class="str">'Model_Name'</span>, <span class="str">'Alpha'</span>, <span class="str">'l1-ratio'</span>, <span class="str">'R-Squared'</span>,
+                                   <span class="str">'Adj. R-Squared'</span>, <span class="str">'Test_RMSE'</span>, <span class="str">'Test_MAPE'</span>])
+
+<span class="kw">def</span> <span class="fn">update_score_card</span>(algorithm_name, model, alpha=<span class="str">'-'</span>, l1_ratio=<span class="str">'-'</span>):
+    new_row = {<span class="str">'Model_Name'</span>: algorithm_name,
+               <span class="str">'Alpha'</span>: alpha, <span class="str">'l1-ratio'</span>: l1_ratio,
+               <span class="str">'Test_MAPE'</span>: get_test_mape(model),
+               <span class="str">'Test_RMSE'</span>: get_test_rmse(model),
+               <span class="str">'R-Squared'</span>: get_score(model)[<span class="nm">0</span>],
+               <span class="str">'Adj. R-Squared'</span>: get_score(model)[<span class="nm">1</span>]}
+    score_card.loc[len(score_card)] = new_row</code></pre>
+
+<h3>5.4 Coefficient bar-plot helper</h3>
+<pre><code><span class="kw">def</span> <span class="fn">plot_coefficients</span>(model, algorithm_name):
+    df_coeff = pd.DataFrame({<span class="str">'Variable'</span>: X.columns, <span class="str">'Coefficient'</span>: model.coef_})
+    sorted_coeff = df_coeff.sort_values(<span class="str">'Coefficient'</span>, ascending=<span class="kw">False</span>)
+    sns.barplot(x=<span class="str">'Coefficient'</span>, y=<span class="str">'Variable'</span>, data=sorted_coeff)</code></pre>
+<p>This lets us <b>see</b> regularization at work later — the bars (coefficients) shrink towards zero.</p>
+
+<h3>5.5 Record the baseline MLR model</h3>
+<pre><code>train_rmse = get_train_rmse(MLR_model)
+test_rmse  = get_test_rmse(MLR_model)
+print(<span class="str">'Train RMSE:'</span>, train_rmse, <span class="str">'| Test RMSE:'</span>, test_rmse)
+print(<span class="str">'Difference:'</span>, train_rmse - test_rmse)
+
+update_score_card(algorithm_name=<span class="str">'Linear Regression'</span>, model=MLR_model)
+score_card</code></pre>
+<div class="box out"><b>Interpretation:</b> train and test RMSE are close → not badly overfit. If the gap were large, that would scream overfitting → and regularization (§8) would be the cure.</div>
+</section>
+
+<!-- 6 -->
+<section class="sec" id="cv" data-badge="6"><div class="sec-lead"><span class="num">6</span><h2>Cross-Validation (Model Validation)</h2></div>
+<p>A single train/test split can be <b>lucky or unlucky</b> — maybe the test rows happened to be easy. <b>Cross-validation (CV)</b> repeats the test on different slices and averages, giving a <b>more trustworthy</b> score.</p>
+<div class="box tip"><b>Analogy:</b> judging a restaurant by <b>one</b> dish is risky. Order <b>five</b> different dishes and average your rating — a much fairer verdict. Each dish takes a turn being "the one you judge on."</div>
+
+<h3>6.1 k-Fold Cross-Validation</h3>
+<p><b>Procedure:</b> chop the data into <b>k</b> equal parts (folds). Each fold takes a turn as the <b>test</b> set while the other k−1 folds train. Do this k times, then average the k scores.</p>
+<pre><code><span class="cmt"># cv = 5 → 5 folds, scoring = 'r2' → score each fold by R²</span>
+scores = cross_val_score(estimator=LinearRegression(),
+                         X=X_train, y=y_train,
+                         cv=<span class="nm">5</span>, scoring=<span class="str">'r2'</span>)
+
+print(<span class="str">'All scores:'</span>, scores)
+print(<span class="str">'Min:'</span>, min(scores), <span class="str">'Max:'</span>, max(scores), <span class="str">'Avg:'</span>, np.mean(scores))</code></pre>
+<div class="box"><b>Read it like this:</b> five R² numbers come back. If they're all close together, the model is <b>stable</b>. If they swing a lot, the model is <b>fragile</b> (high variance). The <b>average</b> is your honest performance estimate.</div>
+
+<h3>6.2 Leave-One-Out CV (LOOCV)</h3>
+<p>The <b>extreme</b> version of k-fold: k = number of rows. Each run tests on <b>exactly one</b> observation and trains on all the rest. For <b>n</b> rows → <b>n</b> runs.</p>
+<pre><code>loocv_rmse = []
+loocv = LeaveOneOut()
+
+<span class="kw">for</span> train_index, test_index <span class="kw">in</span> loocv.split(X_train):
+    <span class="cmt"># one row is the test set, everything else trains</span>
+    X_tr, X_te = X_train.iloc[train_index], X_train.iloc[test_index]
+    y_tr, y_te = y_train.iloc[train_index], y_train.iloc[test_index]
+
+    linreg = LinearRegression().fit(X_tr, y_tr)
+    rmse = np.sqrt(mean_squared_error(y_te, linreg.predict(X_te)))
+    loocv_rmse.append(rmse)
+
+print(<span class="str">'Min:'</span>, min(loocv_rmse), <span class="str">'Max:'</span>, max(loocv_rmse), <span class="str">'Avg:'</span>, np.mean(loocv_rmse))</code></pre>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>k-Fold (e.g. k=5)</th><th>LOOCV</th></tr>
+<tr><td>Runs</td><td>k (few)</td><td>n = one per row (many)</td></tr>
+<tr><td>Speed</td><td>fast</td><td>slow on big data</td></tr>
+<tr><td>Uses all data for training?</td><td>almost</td><td>maximally (n−1 rows each time)</td></tr>
+<tr><td>Downside</td><td>—</td><td>runs highly correlated → high-variance estimate</td></tr>
+</table></div>
+<div class="box tip"><b>Rule of thumb:</b> use <b>k-fold</b> (5 or 10) as the everyday default; reach for <b>LOOCV</b> only on small datasets where you can't spare any rows.</div>
+</section>
+
+<!-- 7 -->
+<section class="sec" id="gd" data-badge="7"><div class="sec-lead"><span class="num">7</span><h2>Gradient Descent &amp; SGD</h2></div>
+<p>OLS solves for the best coefficients with one formula. <b>Gradient descent</b> instead <b>walks</b> to the answer step by step — essential when data is huge and the formula is too expensive.</p>
+
+<h3>7.1 The idea in one picture</h3>
+<div class="box tip"><b>Analogy — hiking down in fog:</b> you're on a hill (the error) and want the lowest valley. You can't see the bottom, so you feel the <b>slope</b> under your feet and step <b>downhill</b>. Steep slope → big step; nearly flat → tiny step. Repeat until the ground is flat (slope ≈ 0). That flat spot is the minimum error.</p></div>
+<ul>
+<li><b>Cost function</b> = the error we want to shrink (for regression, the sum of squared residuals). Also called <i>loss</i> or <i>error</i> function.</li>
+<li><b>Learning rate (α)</b> = the step size. It's a <b>hyperparameter</b> (you set it, the model doesn't learn it).</li>
+<li>The update rule: <b>new parameter = old parameter − (learning rate × slope)</b>.</li>
+</ul>
+<div class="eq">new β = old β − α · (derivative of cost) &nbsp;&nbsp;→&nbsp;&nbsp; repeat until slope ≈ 0</div>
+<div class="box"><b>Getting α right matters:</b> too <b>big</b> → you leap over the valley and never settle (or diverge). Too <b>small</b> → correct but painfully slow. You want steps that are large far away and shrink as you near the bottom.</div>
+
+<h3>7.2 Three flavours of gradient descent</h3>
+<div class="tbl-wrap"><table>
+<tr><th>Type</th><th>Uses per step</th><th>Accuracy</th><th>Speed</th></tr>
+<tr><td><b>Batch GD</b> (vanilla)</td><td><b>all</b> rows</td><td>High</td><td>Slow</td></tr>
+<tr><td><b>Mini-Batch GD</b></td><td>a small <b>group</b> of rows</td><td>Moderate</td><td>Moderate</td></tr>
+<tr><td><b>Stochastic GD (SGD)</b></td><td><b>one</b> row</td><td>Lower / noisier</td><td>Fast</td></tr>
+</table></div>
+<div class="box tip"><b>SGD analogy:</b> instead of asking the <b>whole class</b> before every step (batch), you ask <b>one random student</b> (stochastic). Each answer is noisier, but you take far more steps far faster — great for big data, and you can keep adding new data as it arrives.</div>
+
+<h3>7.3 Build linear regression with SGD</h3>
+<pre><code>sgd = SGDRegressor(random_state=<span class="nm">0</span>)
+linreg_with_SGD = sgd.fit(X_train, y_train)
+
+print(<span class="str">'RMSE on train set:'</span>, get_train_rmse(linreg_with_SGD))
+print(<span class="str">'RMSE on test set:'</span>,  get_test_rmse(linreg_with_SGD))</code></pre>
+
+<h3>7.4 Compare coefficients: OLS vs SGD</h3>
+<pre><code>plt.subplot(<span class="nm">1</span>,<span class="nm">2</span>,<span class="nm">1</span>); plot_coefficients(MLR_model,       <span class="str">'Linear Regression (OLS)'</span>)
+plt.subplot(<span class="nm">1</span>,<span class="nm">2</span>,<span class="nm">2</span>); plot_coefficients(linreg_with_SGD, <span class="str">'Linear Regression (SGD)'</span>)
+plt.tight_layout(); plt.show()
+
+update_score_card(algorithm_name=<span class="str">'Linear Regression (using SGD)'</span>, model=linreg_with_SGD)
+score_card</code></pre>
+<div class="box out"><b>Interpretation:</b> SGD's coefficients come out <b>smaller</b> than OLS's, and its test RMSE is often <b>lower</b> → the smaller, tamer coefficients generalise a bit better. (SGD has mild built-in regularization.)</div>
+</section>
+
+<!-- 8 -->
+<section class="sec" id="regu" data-badge="8"><div class="sec-lead"><span class="num">8</span><h2>Regularization: Ridge, Lasso &amp; Elastic Net</h2></div>
+<p>This is the main cure for overfitting. Plain OLS only minimises error, so it can grow <b>huge coefficients</b> to chase every wiggle in the train data. <b>Regularization adds a penalty</b> for big coefficients, forcing the model to stay simple.</p>
+<div class="eq">cost = <b>error (OLS)</b> &nbsp;+&nbsp; <b>λ · penalty(coefficients)</b></div>
+<div class="box tip"><b>Analogy — a strict budget:</b> OLS is a shopper with an unlimited card who buys every feature at full strength. Regularization puts them on a <b>budget (λ)</b>: every coefficient now "costs" something, so the model only spends on features that truly earn their keep. This deliberately adds a little <b>bias</b> to buy a big drop in <b>variance</b> → less overfitting.</div>
+<div class="box"><b>What is λ (alpha)?</b> The <b>strength</b> of the penalty, a hyperparameter. <b>λ = 0</b> → no penalty (plain OLS). <b>Bigger λ</b> → harder squeeze, coefficients shrink more. Too big → underfitting. The best λ is found by trying values (that's §9). In sklearn this knob is called <code>alpha</code>.</div>
+<div class="box"><b>Occam's razor:</b> "when two models fit equally well, prefer the simpler one." Regularization is exactly this principle turned into maths.</div>
+
+<h3>8.1 Ridge Regression <span class="pill">L2</span></h3>
+<p>Penalty = λ × <b>(sum of squared coefficients)</b>. Ridge <b>shrinks</b> coefficients towards zero but <b>never exactly to zero</b> — it keeps every feature, just quieter.</p>
+<div class="eq">Ridge cost = Σ(yₐ − yₚ)² &nbsp;+&nbsp; λ · Σ(βⱼ)²</div>
+<pre><code>alpha_value = <span class="nm">1</span>
+ridge = Ridge(alpha=alpha_value, max_iter=<span class="nm">500</span>)
+ridge.fit(X_train, y_train)
+print(<span class="str">'RMSE on test set:'</span>, get_test_rmse(ridge))
+
+update_score_card(algorithm_name=<span class="str">'Ridge Regression'</span>, model=ridge, alpha=alpha_value)</code></pre>
+<pre><code><span class="cmt"># try a stronger penalty and SEE the coefficients shrink</span>
+alpha_value = <span class="nm">25</span>
+ridge = Ridge(alpha=alpha_value, max_iter=<span class="nm">500</span>).fit(X_train, y_train)
+
+plt.subplot(<span class="nm">1</span>,<span class="nm">2</span>,<span class="nm">1</span>); plot_coefficients(MLR_model, <span class="str">'Linear Regression (OLS)'</span>)
+plt.subplot(<span class="nm">1</span>,<span class="nm">2</span>,<span class="nm">2</span>); plot_coefficients(ridge,     <span class="str">'Ridge Regression'</span>)
+plt.tight_layout(); plt.show()</code></pre>
+<div class="box out"><b>Interpretation:</b> the Ridge bars are visibly <b>shorter</b> than OLS — coefficients squeezed towards 0, but all still present.</div>
+
+<h3>8.2 Lasso Regression <span class="pill">L1</span></h3>
+<p>Penalty = λ × <b>(sum of |coefficients|)</b>. The key difference: Lasso can push weak coefficients <b>exactly to zero</b> — so it <b>drops features entirely</b>. That makes Lasso a built-in <b>feature selector</b>.</p>
+<div class="eq">Lasso cost = Σ(yₐ − yₚ)² &nbsp;+&nbsp; λ · Σ|βⱼ|</div>
+<pre><code>alpha_value = <span class="nm">0.5</span>
+lasso = Lasso(alpha=alpha_value, max_iter=<span class="nm">500</span>).fit(X_train, y_train)
+print(<span class="str">'RMSE on test set:'</span>, get_test_rmse(lasso))
+
+<span class="cmt"># which variables did Lasso switch OFF (coefficient == 0)?</span>
+df_lasso = pd.DataFrame({<span class="str">'Variable'</span>: X.columns, <span class="str">'Coefficient'</span>: lasso.coef_})
+df_lasso.Variable[df_lasso.Coefficient == <span class="nm">0</span>].to_list()
+
+update_score_card(algorithm_name=<span class="str">'Lasso Regression'</span>, model=lasso, alpha=alpha_value)</code></pre>
+<div class="box out"><b>Interpretation:</b> in the coefficient plot, several Lasso bars sit at <b>exactly zero</b> → those features are eliminated. Fewer features = simpler, more explainable model.</div>
+
+<h3>8.3 Ridge vs Lasso — the one-line difference</h3>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>Ridge (L2)</th><th>Lasso (L1)</th></tr>
+<tr><td>Penalty</td><td>Σ(β²)</td><td>Σ|β|</td></tr>
+<tr><td>Shrinks coefficients?</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Sets some to exactly 0?</td><td><b>No</b> — keeps all</td><td><b>Yes</b> — drops features</td></tr>
+<tr><td>Use when…</td><td>all/most features matter, many interactions</td><td>many features are useless and should go</td></tr>
+</table></div>
+
+<h3>8.4 Elastic Net <span class="pill">L1 + L2</span></h3>
+<p>Can't decide between Ridge and Lasso? Elastic Net uses <b>both</b> penalties. The <code>l1_ratio</code> mixes them:</p>
+<div class="eq">l1_ratio = 0 → pure <b>Ridge</b> &nbsp;|&nbsp; l1_ratio = 1 → pure <b>Lasso</b> &nbsp;|&nbsp; 0 &lt; l1_ratio &lt; 1 → a blend</div>
+<pre><code>alpha_value    = <span class="nm">0.1</span>
+l1_ratio_value = <span class="nm">0.01</span>
+
+enet = ElasticNet(alpha=alpha_value, l1_ratio=l1_ratio_value, max_iter=<span class="nm">500</span>)
+enet.fit(X_train, y_train)
+print(<span class="str">'RMSE on test set:'</span>, get_test_rmse(enet))
+
+update_score_card(algorithm_name=<span class="str">'Elastic Net Regression'</span>, model=enet,
+                  alpha=alpha_value, l1_ratio=l1_ratio_value)</code></pre>
+<div class="box tip"><b>When to use which (exam favourite):</b> <b>Ridge</b> if it's important to keep all predictors. <b>Lasso</b> if some predictors are junk you want gone. <b>Elastic Net</b> when there are so many variables you can't tell — it hedges by doing a bit of both.</div>
+</section>
+
+<!-- 9 -->
+<section class="sec" id="tune" data-badge="9"><div class="sec-lead"><span class="num">9</span><h2>Hyperparameter Tuning</h2></div>
+<p>So far we <b>guessed</b> alpha (0.5, 1, 25…). Tuning <b>automates the search</b> for the best value. Reminder: a <b>hyperparameter</b> is a knob <b>you</b> set (alpha, l1_ratio, learning rate), unlike coefficients which the model learns from data.</p>
+
+<h3>9.1 GridSearchCV — try every combination</h3>
+<p>You hand it a <b>grid</b> of values; it tests <b>all</b> of them with cross-validation and returns the winner. Thorough, but slow if the grid is big.</p>
+<div class="box tip"><b>Analogy:</b> trying <b>every</b> key on a keyring, one by one, until the door opens. Guaranteed to find it — but could take a while.</div>
+<pre><code><span class="cmt"># ----- Ridge -----</span>
+tuned_parameters = [{<span class="str">'alpha'</span>: [<span class="nm">1e-3</span>, <span class="nm">1e-2</span>, <span class="nm">0.1</span>, <span class="nm">1</span>, <span class="nm">10</span>, <span class="nm">20</span>]}]
+
+ridge_grid = GridSearchCV(estimator=Ridge(),
+                          param_grid=tuned_parameters,
+                          cv=<span class="nm">3</span>)                 <span class="cmt"># 3-fold CV for each alpha</span>
+ridge_grid.fit(X_train, y_train)
+
+print(<span class="str">'Best parameters:'</span>, ridge_grid.best_params_)
+print(<span class="str">'RMSE on test set:'</span>, get_test_rmse(ridge_grid))
+
+update_score_card(algorithm_name=<span class="str">'Ridge (GridSearchCV)'</span>, model=ridge_grid,
+                  alpha=ridge_grid.best_params_.get(<span class="str">'alpha'</span>))</code></pre>
+<pre><code><span class="cmt"># ----- Lasso: same idea, different grid -----</span>
+tuned_parameters = [{<span class="str">'alpha'</span>: [<span class="nm">0.1</span>, <span class="nm">0.2</span>, <span class="nm">0.5</span>, <span class="nm">0.8</span>, <span class="nm">1</span>, <span class="nm">5</span>, <span class="nm">10</span>]}]
+lasso_grid = GridSearchCV(estimator=Lasso(), param_grid=tuned_parameters, cv=<span class="nm">3</span>)
+lasso_grid.fit(X_train, y_train)
+print(<span class="str">'Best parameters:'</span>, lasso_grid.best_params_)</code></pre>
+<pre><code><span class="cmt"># ----- Elastic Net: TWO knobs → grid is alpha × l1_ratio -----</span>
+tuned_parameters = [{<span class="str">'alpha'</span>:    [<span class="nm">0.01</span>, <span class="nm">0.05</span>, <span class="nm">0.1</span>, <span class="nm">0.3</span>, <span class="nm">0.5</span>, <span class="nm">0.7</span>, <span class="nm">1</span>, <span class="nm">10</span>, <span class="nm">20</span>],
+                     <span class="str">'l1_ratio'</span>: [<span class="nm">0.0001</span>, <span class="nm">0.001</span>, <span class="nm">0.01</span>, <span class="nm">0.1</span>, <span class="nm">0.2</span>, <span class="nm">0.5</span>, <span class="nm">0.7</span>]}]
+enet_grid = GridSearchCV(estimator=ElasticNet(), param_grid=tuned_parameters, cv=<span class="nm">3</span>)
+enet_grid.fit(X_train, y_train)
+print(<span class="str">'Best parameters:'</span>, enet_grid.best_params_)</code></pre>
+<div class="box"><b>Key attributes:</b> after fitting, <code>.best_params_</code> gives the winning values and <code>.best_estimator_</code> is the model already built with them. Grid size grows fast: 9 alphas × 7 l1_ratios = <b>63</b> combinations × 3 folds = 189 fits.</div>
+
+<h3>9.2 RandomizedSearchCV — try a random sample</h3>
+<p>Instead of <b>all</b> combinations, it tries <b>n_iter</b> random ones. Much faster; may miss the exact best but usually lands very close.</p>
+<div class="box tip"><b>Analogy:</b> rather than every key on the ring, you try a <b>handful of likely-looking keys</b>. Far quicker, and one of them usually works.</div>
+<pre><code>tuned_parameters = [{<span class="str">'alpha'</span>: [<span class="nm">1e-10</span>, <span class="nm">1e-8</span>, <span class="nm">1e-4</span>, <span class="nm">1e-3</span>, <span class="nm">1e-2</span>, <span class="nm">0.1</span>, <span class="nm">1</span>, <span class="nm">5</span>, <span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">40</span>, <span class="nm">60</span>, <span class="nm">80</span>, <span class="nm">100</span>]}]
+
+ridge_rand = RandomizedSearchCV(estimator=Ridge(),
+                                param_distributions=tuned_parameters,
+                                cv=<span class="nm">3</span>, n_iter=<span class="nm">10</span>,      <span class="cmt"># test only 10 random alphas</span>
+                                random_state=<span class="nm">0</span>, n_jobs=-<span class="nm">1</span>)  <span class="cmt"># n_jobs=-1 → use all CPU cores</span>
+ridge_rand.fit(X_train, y_train)
+print(<span class="str">'Best parameters:'</span>, ridge_rand.best_params_)</code></pre>
+<p>Lasso and Elastic Net follow the identical pattern — swap in <code>Lasso()</code> / <code>ElasticNet()</code> and their grids. The one new argument vs GridSearch is <code>n_iter</code> (how many random tries) and the key is <code>param_distributions</code> instead of <code>param_grid</code>.</p>
+<div class="tbl-wrap"><table>
+<tr><th>Argument</th><th>Meaning</th></tr>
+<tr><td><code>estimator</code></td><td>the model to tune (Ridge, Lasso…)</td></tr>
+<tr><td><code>param_distributions</code></td><td>dict of hyperparameters + values to sample from</td></tr>
+<tr><td><code>cv</code></td><td>number of CV folds (default 5)</td></tr>
+<tr><td><code>n_iter</code></td><td>how many random combinations to try (default 10)</td></tr>
+<tr><td><code>n_jobs=-1</code></td><td>run in parallel using every CPU core</td></tr>
+</table></div>
+
+<div class="grid2">
+<div class="box tip"><b>GridSearchCV</b> — exhaustive, tries <b>everything</b>. Most thorough, most expensive. Use with small grids.</div>
+<div class="box"><b>RandomizedSearchCV</b> — samples randomly. Faster, may miss the exact best. Use with big search spaces.</div>
+</div>
+
+<h3>9.3 Bayesian Optimization (Optuna)</h3>
+<p>The smartest of the three. Grid and Random search have <b>no memory</b> — each try ignores the last. Bayesian search <b>learns from past trials</b> and steers the next guess toward promising regions, so it finds a good value in <b>fewer</b> tries.</p>
+<div class="box tip"><b>Analogy — "hotter / colder":</b> Grid checks every square of the room blindly. Bayesian plays hot-and-cold: each guess uses the feedback from the last to move closer to the hidden object. We use <b>Optuna</b> (beginner-friendly: search space + objective live in one function).</div>
+<pre><code><span class="cmt"># !pip install optuna</span>
+<span class="kw">import</span> optuna
+<span class="kw">from</span> optuna.samplers <span class="kw">import</span> TPESampler   <span class="cmt"># only needed to fix a seed for repeatability</span>
+
+<span class="cmt"># 1) objective: build the model for a suggested alpha, return the score to MINIMISE</span>
+<span class="kw">def</span> <span class="fn">objective</span>(trial):
+    params = {<span class="str">'alpha'</span>: trial.suggest_float(<span class="str">'alpha'</span>, <span class="nm">0.0001</span>, <span class="nm">10</span>)}
+    ridge = Ridge(**params).fit(X_train, y_train)
+    <span class="kw">return</span> get_test_rmse(ridge)          <span class="cmt"># lower RMSE = better</span>
+
+<span class="cmt"># 2) minimise RMSE over 100 smart trials</span>
+study = optuna.create_study(direction=<span class="str">'minimize'</span>, sampler=TPESampler(seed=<span class="nm">10</span>))
+study.optimize(objective, n_trials=<span class="nm">100</span>)
+
+print(<span class="str">'Best RMSE:'</span>, study.best_trial.value)
+print(<span class="str">'Best Params:'</span>, study.best_trial.params)
+
+<span class="cmt"># 3) build the final model with the best alpha found</span>
+ridge_optuna = Ridge(**study.best_trial.params).fit(X_train, y_train)
+update_score_card(algorithm_name=<span class="str">'Ridge (Optuna)'</span>, model=ridge_optuna,
+                  alpha=ridge_optuna.alpha)</code></pre>
+<p>Lasso and Elastic Net use the same three steps — only the model inside <code>objective</code> changes. For Elastic Net the objective suggests <b>two</b> values:</p>
+<pre><code><span class="kw">def</span> <span class="fn">objective</span>(trial):
+    params = {<span class="str">'alpha'</span>:    trial.suggest_float(<span class="str">'alpha'</span>, <span class="nm">0.001</span>, <span class="nm">10</span>),
+              <span class="str">'l1_ratio'</span>: trial.suggest_float(<span class="str">'l1_ratio'</span>, <span class="nm">0.01</span>, <span class="nm">0.99</span>)}
+    enet = ElasticNet(**params).fit(X_train, y_train)
+    <span class="kw">return</span> get_test_rmse(enet)</code></pre>
+
+<h3>9.4 Pick the winner</h3>
+<pre><code><span class="cmt"># sort every model by Test RMSE and highlight the lowest</span>
+score_card = score_card.sort_values(<span class="str">'Test_RMSE'</span>).reset_index(drop=<span class="kw">True</span>)
+score_card.style.highlight_min(color=<span class="str">'lightblue'</span>, subset=<span class="str">'Test_RMSE'</span>)</code></pre>
+<div class="box out"><b>The payoff:</b> the whole session funnels into this one table. The model with the <b>lowest Test RMSE</b> (and a small train–test gap) is your best, most trustworthy model.</div>
+</section>
+
+<!-- Recipe -->
+<section class="sec" id="recipe" data-badge="★"><div class="sec-lead"><span class="num">★</span><h2>Exam-Ready Recipe (write in this order)</h2></div>
+<div class="answer">
+<p><b>Goal of the session:</b> reduce <b>generalization error</b> (the train–test gap) by balancing <b>bias</b> and <b>variance</b>.</p>
+<ol>
+<li><b>Prep:</b> load data, drop id column (<code>RecNo</code>), check missing values, split X/y, <code>get_dummies(drop_first=True)</code>.</li>
+<li><b>Split &amp; scale:</b> <code>train_test_split(random_state=…)</code>; <code>StandardScaler</code> — <code>fit_transform</code> on train, <code>transform</code> on test.</li>
+<li><b>Baseline OLS:</b> sklearn <code>LinearRegression</code> (no <code>add_constant</code>). Record RMSE, MAPE, R², Adj R².</li>
+<li><b>Validate:</b> <code>cross_val_score(cv=5)</code> for a stable score; LOOCV on small data.</li>
+<li><b>Gradient descent:</b> <code>SGDRegressor</code> — fast on big data; coefficients come out smaller.</li>
+<li><b>Regularize</b> (cures overfitting by shrinking coefficients):
+  <ul>
+  <li><b>Ridge (L2)</b> Σβ² — shrinks all, drops none.</li>
+  <li><b>Lasso (L1)</b> Σ|β| — sets weak ones to 0 → feature selection.</li>
+  <li><b>Elastic Net</b> — both; <code>l1_ratio</code> mixes (0 = Ridge, 1 = Lasso).</li>
+  </ul></li>
+<li><b>Tune the hyperparameter (alpha):</b> GridSearchCV (all combos) → RandomizedSearchCV (random subset, <code>n_iter</code>) → Optuna (Bayesian, learns from past trials).</li>
+<li><b>Decide:</b> sort the score card by <b>Test RMSE</b>; lowest RMSE with a small train–test gap wins.</li>
+</ol>
+</div>
+<div class="box tip"><b>Three facts examiners love:</b> (1) <code>add_constant()</code> is for <b>statsmodels only</b>. (2) <b>Scale before regularizing</b>, or the penalty is unfair. (3) Regularization <b>adds bias to cut variance</b> — that trade is the whole point.</div>
+</section>
+
+<!-- Quick -->
+<section class="sec" id="quick" data-badge="≡"><div class="sec-lead"><span class="num">≡</span><h2>Quick Revision</h2></div>
+<div class="tbl-wrap"><table>
+<tr><th>Term</th><th>One-line meaning</th></tr>
+<tr><td>Bias</td><td>Model too simple → underfits; wrong but consistent.</td></tr>
+<tr><td>Variance</td><td>Model too flexible → overfits; great on train, poor on test.</td></tr>
+<tr><td>Overfitting</td><td>Big gap between train and test error (high generalization error).</td></tr>
+<tr><td>Bias–variance trade-off</td><td>More bias ↓ variance and vice-versa; aim for the sweet spot.</td></tr>
+<tr><td>MSE / RMSE</td><td>Avg squared error / its √ (real units). Lower = better.</td></tr>
+<tr><td>MAE</td><td>Avg absolute error; gentler on outliers.</td></tr>
+<tr><td>MAPE</td><td>Avg error as a % (× 100).</td></tr>
+<tr><td>R² / Adj R²</td><td>% variance explained; Adj R² penalises extra features.</td></tr>
+<tr><td>add_constant()</td><td>Intercept column — <b>statsmodels OLS only</b>.</td></tr>
+<tr><td>StandardScaler</td><td>(x−mean)/σ; fit on train, transform test.</td></tr>
+<tr><td>Normalization (Min-Max)</td><td>(x−min)/(max−min) → 0–1. Use when distribution unknown/non-Gaussian.</td></tr>
+<tr><td>Standardization (Z-score)</td><td>(x−mean)/σ. Use when roughly Gaussian; keeps outlier impact.</td></tr>
+<tr><td>Cross-validation</td><td>Test on several folds and average for an honest score.</td></tr>
+<tr><td>k-Fold</td><td>k parts; each is test once. Default k = 5 or 10.</td></tr>
+<tr><td>LOOCV</td><td>k = n rows; one row tested per run. Small data only.</td></tr>
+<tr><td>Cost / loss function</td><td>The error we minimise (Σ squared residuals).</td></tr>
+<tr><td>Gradient descent</td><td>Walk downhill on the error using the slope, step = learning rate α.</td></tr>
+<tr><td>Learning rate α</td><td>Step size (hyperparameter). Too big overshoots, too small is slow.</td></tr>
+<tr><td>Batch / Mini / SGD</td><td>All rows / a group / one row per step. SGD = fast, noisy.</td></tr>
+<tr><td>Regularization</td><td>Add λ·penalty for big coefficients → less overfitting.</td></tr>
+<tr><td>λ (alpha)</td><td>Penalty strength. 0 = plain OLS; bigger = more shrinkage.</td></tr>
+<tr><td>Ridge (L2)</td><td>Penalty Σβ²; shrinks all, keeps every feature.</td></tr>
+<tr><td>Lasso (L1)</td><td>Penalty Σ|β|; sends weak coefficients to 0 (feature selection).</td></tr>
+<tr><td>Elastic Net</td><td>L1 + L2; l1_ratio 0 = Ridge, 1 = Lasso.</td></tr>
+<tr><td>Hyperparameter</td><td>A knob you set (α, λ, l1_ratio), not learned from data.</td></tr>
+<tr><td>GridSearchCV</td><td>Try all combinations; thorough, slow. Uses <code>param_grid</code>.</td></tr>
+<tr><td>RandomizedSearchCV</td><td>Try n_iter random combos; fast. Uses <code>param_distributions</code>.</td></tr>
+<tr><td>Optuna (Bayesian)</td><td>Learns from past trials to guess smarter; fewer trials.</td></tr>
+<tr><td>Goal of tuning</td><td>Lowest Test RMSE with a small train–test gap.</td></tr>
+</table></div>
+<p class="foot">ML1 · Session 5 · Model Optimization — built from the faculty notebook and slides. Study aid only.</p>
+</section>
+
+
+</main>
+</div>
+
+<script src="../assets/js/theme.js"></script>
+</body>
+</html>

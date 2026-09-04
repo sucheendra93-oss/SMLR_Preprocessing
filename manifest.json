@@ -3,42 +3,49 @@
     "id": "01",
     "file": "01-preprocessing.html",
     "title": "Preprocessing Exam Kit",
-    "eyebrow": "Data Preprocessing · BigMart Sales",
+    "eyebrow": "Data Preprocessing \u00b7 BigMart Sales",
     "description": "Every line of the Session 1 notebook, explained mechanically and mapped to the SMLR model paper."
   },
   {
     "id": "01-simple",
     "file": "01-preprocessing-simple.html",
-    "title": "Data Preprocessing — Simple",
-    "eyebrow": "ML1 · Session 1 · Simple version",
-    "description": "A shorter, plainer pass over the same Session 1 notebook — code, why it's used, and a ready-to-write exam answer."
+    "title": "Data Preprocessing \u2014 Simple",
+    "eyebrow": "ML1 \u00b7 Session 1 \u00b7 Simple version",
+    "description": "A shorter, plainer pass over the same Session 1 notebook \u2014 code, why it's used, and a ready-to-write exam answer."
   },
   {
     "id": "02",
     "file": "02-linear-regression.html",
     "title": "Linear Regression Exam Kit",
-    "eyebrow": "Machine Learning · Simple & Multiple Linear Regression",
+    "eyebrow": "Machine Learning \u00b7 Simple & Multiple Linear Regression",
     "description": "Session 2 explained with analogies and formulas, from the carpremium.csv notebook, mapped to the SMLR model paper."
   },
   {
     "id": "02-simple",
     "file": "02-linear-regression-simple.html",
-    "title": "Linear Regression — Simple",
-    "eyebrow": "ML1 · Session 2 · Simple version",
-    "description": "A shorter, plainer pass over the same Session 2 notebook — code, why it's used, and a ready-to-write exam answer."
+    "title": "Linear Regression \u2014 Simple",
+    "eyebrow": "ML1 \u00b7 Session 2 \u00b7 Simple version",
+    "description": "A shorter, plainer pass over the same Session 2 notebook \u2014 code, why it's used, and a ready-to-write exam answer."
   },
   {
     "id": "03",
     "file": "03-mlr.html",
     "title": "Multiple Linear Regression Exam Kit",
-    "eyebrow": "ML1 · Session 3 · House Price",
+    "eyebrow": "ML1 \u00b7 Session 3 \u00b7 House Price",
     "description": "The full faculty MLR notebook, every regression assumption before and after building, model evaluation, and a complete solve of the Model QP."
   },
   {
     "id": "04",
     "file": "04-feature-selection.html",
     "title": "Feature Selection Exam Kit",
-    "eyebrow": "ML1 · Session 4 · Appliances Energy",
-    "description": "Transform skewed variables, scale features, then select only what matters with forward, backward, stepwise and RFE — coded and explained from the faculty notebook."
+    "eyebrow": "ML1 \u00b7 Session 4 \u00b7 Appliances Energy",
+    "description": "Transform skewed variables, scale features, then select only what matters with forward, backward, stepwise and RFE \u2014 coded and explained from the faculty notebook."
+  },
+  {
+    "id": "05",
+    "file": "05-model-optimization.html",
+    "title": "Model Optimization Exam Kit",
+    "eyebrow": "ML1 \u00b7 Session 5 \u00b7 Housing Price Prediction",
+    "description": "Bias/variance, cross-validation, gradient descent, Ridge/Lasso/ElasticNet regularization and hyperparameter tuning (GridSearch, RandomizedSearch, Optuna) \u2014 every cell of the faculty notebook, coded and explained simply."
   }
 ]
